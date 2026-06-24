@@ -1,8 +1,77 @@
 # DynamicTextureManager.rpy
+init -10 python:
+    import json
+    import os
+
+    # Inicializar el almacén de variables
+    store.mas_dtm_overrides = {
+        "eyes_theme": None,
+        "mouth_theme": None,
+        "nose_theme": None,
+        "body_theme": None,
+        "chess_theme": None,
+        "pong_field": None,
+        "nou_theme": None
+    }
+
+    # Purge any old overrides from persistent to clean saves
+    for k in list(dir(persistent)):
+        if k.startswith("_mas_dtm") or k.startswith("mas_dtm"):
+            try:
+                delattr(persistent, k)
+            except Exception:
+                pass
+
+    # Configuración de rutas compatibles con PC
+    store.DTM_BASE_PARENT = renpy.config.basedir
+
+    if store.DTM_BASE_PARENT not in renpy.config.searchpath:
+        renpy.config.searchpath.append(store.DTM_BASE_PARENT)
+
+    store.DTM_CONFIG_PATH = os.path.join(store.DTM_BASE_PARENT, "textures", "config.json")
+
+    def mas_dtm_load_config():
+        try:
+            if os.path.isfile(store.DTM_CONFIG_PATH):
+                with open(store.DTM_CONFIG_PATH, "r") as f:
+                    data = json.load(f)
+                changed = False
+                for k, v in data.items():
+                    if k in store.mas_dtm_overrides:
+                        if v is not None:
+                            # Resolve path relative to DTM_BASE_PARENT if it is relative
+                            abs_v = v if os.path.isabs(v) else os.path.join(store.DTM_BASE_PARENT, v)
+                            if not os.path.exists(abs_v):
+                                v = None
+                                changed = True
+                        store.mas_dtm_overrides[k] = v
+                if changed:
+                    mas_dtm_save_config()
+        except Exception:
+            pass
+
+    def mas_dtm_save_config():
+        try:
+            textures_dir = os.path.dirname(store.DTM_CONFIG_PATH)
+            if not os.path.exists(textures_dir):
+                os.makedirs(textures_dir)
+            with open(store.DTM_CONFIG_PATH, "w") as f:
+                json.dump(store.mas_dtm_overrides, f, indent=4)
+        except Exception:
+            pass
+
+    mas_dtm_load_config()
+
 init 999 python in dtm_core:
     import store
     import os
     import shutil
+
+    # Python 2 and Python 3 compatibility helper
+    try:
+        basestring
+    except NameError:
+        basestring = str
 
     def _get_rel_path(abs_path):
         """
@@ -14,6 +83,20 @@ init 999 python in dtm_core:
             return rel.replace("\\", "/")
         except Exception:
             return abs_path
+
+    def _make_portable_path(folder_path):
+        """
+        Convierte una ruta absoluta a relativa para guardarla de forma portable
+        en el archivo config.json.
+        """
+        if folder_path is None:
+            return None
+        if os.path.isabs(folder_path):
+            try:
+                return os.path.relpath(folder_path, store.DTM_BASE_PARENT).replace("\\", "/")
+            except Exception:
+                pass
+        return folder_path
 
     if not hasattr(store, "_mas_dtm_originals"):
         store._mas_dtm_originals = {
@@ -31,7 +114,7 @@ init 999 python in dtm_core:
     # API DE CONTROL VISUAL - ROSTRO
     # ==========================================
     def set_eyes_textures(folder_path):
-        store.mas_dtm_overrides["eyes_theme"] = folder_path
+        store.mas_dtm_overrides["eyes_theme"] = _make_portable_path(folder_path)
         store.mas_dtm_save_config()
         apply_sprite_overrides()
         force_update_mas_visuals()
@@ -45,7 +128,7 @@ init 999 python in dtm_core:
         force_update_mas_visuals()
 
     def set_mouth_textures(folder_path):
-        store.mas_dtm_overrides["mouth_theme"] = folder_path
+        store.mas_dtm_overrides["mouth_theme"] = _make_portable_path(folder_path)
         store.mas_dtm_save_config()
         apply_sprite_overrides()
         force_update_mas_visuals()
@@ -59,7 +142,7 @@ init 999 python in dtm_core:
         force_update_mas_visuals()
 
     def set_nose_textures(folder_path):
-        store.mas_dtm_overrides["nose_theme"] = folder_path
+        store.mas_dtm_overrides["nose_theme"] = _make_portable_path(folder_path)
         store.mas_dtm_save_config()
         apply_sprite_overrides()
         force_update_mas_visuals()
@@ -76,7 +159,7 @@ init 999 python in dtm_core:
     # API DE CONTROL VISUAL - CUERPO
     # ==========================================
     def set_body_textures(folder_path):
-        store.mas_dtm_overrides["body_theme"] = folder_path
+        store.mas_dtm_overrides["body_theme"] = _make_portable_path(folder_path)
         store.mas_dtm_save_config()
         apply_body_overrides()
         force_update_mas_visuals()
@@ -100,13 +183,87 @@ init 999 python in dtm_core:
         force_update_mas_visuals()
 
     # ==========================================
+    # API DE CONTROL VISUAL - JUEGOS
+    # ==========================================
+    def set_pong_textures(folder_path):
+        store.mas_dtm_overrides["pong_field"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        apply_pong_overrides()
+        force_update_mas_visuals()
+
+    def reset_pong_textures():
+        store.mas_dtm_overrides["pong_field"] = None
+        store.mas_dtm_save_config()
+        renpy.display.image.images[("bg", "pong", "field")] = store.Image("mod_assets/games/pong/pong_field.png")
+        if hasattr(store, "_mas_dtm_original_pong_init") and hasattr(store, "PongDisplayable"):
+            store.PongDisplayable.__init__ = store._mas_dtm_original_pong_init
+        if hasattr(store, "_mas_dtm_pong_surfaces"):
+            del store._mas_dtm_pong_surfaces
+        renpy.display.im.cache.clear()
+        force_update_mas_visuals()
+
+    def set_chess_textures(folder_path):
+        store.mas_dtm_overrides["chess_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        apply_chess_overrides()
+
+    def reset_chess_textures():
+        store.mas_dtm_overrides["chess_theme"] = None
+        store.mas_dtm_save_config()
+        if hasattr(store, "MASPiece"):
+            if hasattr(store, "_mas_dtm_original_chess_map"):
+                store.MASPiece.IMG_MAP.clear()
+                store.MASPiece.IMG_MAP.update(store._mas_dtm_original_chess_map)
+        if hasattr(store, "_mas_dtm_original_chess_board"):
+            store.MASChessDisplayableBase.BOARD_IMAGE = store._mas_dtm_original_chess_board
+        if hasattr(store, "_mas_dtm_original_chess_indicator_player"):
+            store.MASChessDisplayableBase.MOVE_INDICATOR_PLAYER = store._mas_dtm_original_chess_indicator_player
+        if hasattr(store, "_mas_dtm_original_chess_indicator_monika"):
+            store.MASChessDisplayableBase.MOVE_INDICATOR_MONIKA = store._mas_dtm_original_chess_indicator_monika
+        if hasattr(store, "_mas_dtm_original_chess_hl_green"):
+            store.MASChessDisplayableBase.PIECE_HIGHLIGHT_GREEN_IMAGE = store._mas_dtm_original_chess_hl_green
+        if hasattr(store, "_mas_dtm_original_chess_hl_red"):
+            store.MASChessDisplayableBase.PIECE_HIGHLIGHT_RED_IMAGE = store._mas_dtm_original_chess_hl_red
+        if hasattr(store, "_mas_dtm_original_chess_hl_yellow"):
+            store.MASChessDisplayableBase.PIECE_HIGHLIGHT_YELLOW_IMAGE = store._mas_dtm_original_chess_hl_yellow
+        if hasattr(store, "_mas_dtm_original_chess_hl_magenta"):
+            store.MASChessDisplayableBase.PIECE_HIGHLIGHT_MAGENTA_IMAGE = store._mas_dtm_original_chess_hl_magenta
+        renpy.display.im.cache.clear()
+        force_update_mas_visuals()
+
+    def set_nou_textures(folder_path):
+        store.mas_dtm_overrides["nou_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        apply_nou_overrides()
+
+    def reset_nou_textures():
+        store.mas_dtm_overrides["nou_theme"] = None
+        store.mas_dtm_save_config()
+        if hasattr(store, "_mas_dtm_original_filter_switch"):
+            store.MASFilterSwitch = store._mas_dtm_original_filter_switch
+        if hasattr(store, "mas_nou") and hasattr(store.mas_nou.NOU, "_load_sfx"):
+            store.mas_nou.NOU._load_sfx()
+        if hasattr(store, "mas_cardgames") and hasattr(store.mas_cardgames, "_m1_zz_cardgames__scanDeskSprites"):
+            store.mas_cardgames.DESK_SPRITES_MAP.clear()
+            store.mas_cardgames._m1_zz_cardgames__scanDeskSprites()
+        if hasattr(store, "_mas_dtm_original_nou_init") and hasattr(store, "mas_nou"):
+            store.mas_nou.NOU.__init__ = store._mas_dtm_original_nou_init
+        if hasattr(store, "_mas_dtm_original_load_card_asset") and hasattr(store, "mas_nou"):
+            store.mas_nou.NOU._m1_zz_cardgames__load_card_asset = store._mas_dtm_original_load_card_asset
+        renpy.display.im.cache.clear()
+        force_update_mas_visuals()
+
+    # ==========================================
     # LÓGICA DE INYECCIÓN - CUERPO
     # ==========================================
     def apply_body_overrides():
-        body_folder = store.mas_dtm_overrides.get("body_theme", None)
+        body_folder_raw = store.mas_dtm_overrides.get("body_theme", None)
+        body_folder = None
+        if body_folder_raw:
+            body_folder = body_folder_raw if os.path.isabs(body_folder_raw) else os.path.join(store.DTM_BASE_PARENT, body_folder_raw)
+
         import os
         mod_art_path = getattr(store.mas_sprites, "MOD_ART_PATH", "mod_assets/monika/").replace("\\", "/")
-
         body_folder_valid = bool(body_folder and os.path.isdir(body_folder))
 
         if not body_folder_valid:
@@ -165,7 +322,6 @@ init 999 python in dtm_core:
                 return None
 
             rel_path = normalized[len(mod_art_path):].lstrip("/\\")
-            
             if not rel_path.startswith("b/"):
                 return None
 
@@ -378,7 +534,7 @@ init 999 python in dtm_core:
             pass
 
     # ==========================================
-    # LÓGICA DE INYECCIÓN - ROSTRO (UNIFICADA)
+    # LÓGICA DE INYECCIÓN - ROSTRO
     # ==========================================
     def apply_sprite_overrides():
         if not hasattr(store, "_mas_dtm_original_rk_face"):
@@ -401,9 +557,20 @@ init 999 python in dtm_core:
         except Exception:
             pass
 
-        eyes_folder = store.mas_dtm_overrides.get("eyes_theme")
-        mouth_folder = store.mas_dtm_overrides.get("mouth_theme")
-        nose_folder = store.mas_dtm_overrides.get("nose_theme")
+        eyes_folder_raw = store.mas_dtm_overrides.get("eyes_theme")
+        eyes_folder = None
+        if eyes_folder_raw:
+            eyes_folder = eyes_folder_raw if os.path.isabs(eyes_folder_raw) else os.path.join(store.DTM_BASE_PARENT, eyes_folder_raw)
+
+        mouth_folder_raw = store.mas_dtm_overrides.get("mouth_theme")
+        mouth_folder = None
+        if mouth_folder_raw:
+            mouth_folder = mouth_folder_raw if os.path.isabs(mouth_folder_raw) else os.path.join(store.DTM_BASE_PARENT, mouth_folder_raw)
+
+        nose_folder_raw = store.mas_dtm_overrides.get("nose_theme")
+        nose_folder = None
+        if nose_folder_raw:
+            nose_folder = nose_folder_raw if os.path.isabs(nose_folder_raw) else os.path.join(store.DTM_BASE_PARENT, nose_folder_raw)
 
         if not (eyes_folder or mouth_folder or nose_folder):
             if hasattr(store, "_mas_dtm_original_rk_face"):
@@ -507,3 +674,259 @@ init 999 python in dtm_core:
                 pass
 
         store.mas_sprites._rk_face = custom_rk_face
+
+    # ==========================================
+    # LÓGICA DE INYECCIÓN - JUEGOS (PONG)
+    # ==========================================
+    def apply_pong_overrides():
+        pong_folder_raw = store.mas_dtm_overrides.get("pong_field", None)
+        pong_folder = None
+        if pong_folder_raw:
+            pong_folder = pong_folder_raw if os.path.isabs(pong_folder_raw) else os.path.join(store.DTM_BASE_PARENT, pong_folder_raw)
+
+        if not pong_folder or not os.path.isdir(pong_folder):
+            return
+
+        copied = {}
+        for fname in ("pong_field.png", "pong.png", "pong_ball.png"):
+            src = os.path.join(pong_folder, fname)
+            if os.path.isfile(src):
+                copied[fname] = _get_rel_path(src)
+
+        store._mas_dtm_pong_surfaces = copied
+        renpy.display.im.cache.clear()
+
+        if "pong_field.png" in copied:
+            renpy.display.image.images[("bg", "pong", "field")] = store.Image(copied["pong_field.png"])
+
+        if hasattr(store, "PongDisplayable"):
+            if not hasattr(store, "_mas_dtm_original_pong_init"):
+                store._mas_dtm_original_pong_init = store.PongDisplayable.__init__
+
+            def custom_pong_init(self, *args, **kwargs):
+                store._mas_dtm_original_pong_init(self, *args, **kwargs)
+                cached = getattr(store, "_mas_dtm_pong_surfaces", {})
+                if "pong.png" in cached:
+                    self.paddle = renpy.display.im.Image(cached["pong.png"])
+                if "pong_ball.png" in cached:
+                    self.ball = renpy.display.im.Image(cached["pong_ball.png"])
+
+            store.PongDisplayable.__init__ = custom_pong_init
+
+    # ==========================================
+    # LÓGICA DE INYECCIÓN - JUEGOS (CHESS)
+    # ==========================================
+    def apply_chess_overrides(sync=True):
+        chess_folder = store.mas_dtm_overrides.get("chess_theme", None)
+        if not chess_folder:
+            return
+
+        _finish_apply_chess_overrides(startup=sync)
+
+    def _finish_apply_chess_overrides(startup=False):
+        chess_folder_raw = store.mas_dtm_overrides.get("chess_theme", None)
+        chess_folder = None
+        if chess_folder_raw:
+            chess_folder = chess_folder_raw if os.path.isabs(chess_folder_raw) else os.path.join(store.DTM_BASE_PARENT, chess_folder_raw)
+
+        if not chess_folder or not os.path.isdir(chess_folder):
+            return
+
+        if not hasattr(store, "MASPiece"):
+            return
+
+        if not hasattr(store, "_mas_dtm_original_chess_map"):
+            store._mas_dtm_original_chess_map = store.MASPiece.IMG_MAP.copy()
+        if not hasattr(store, "_mas_dtm_original_chess_board"):
+            store._mas_dtm_original_chess_board = store.MASChessDisplayableBase.BOARD_IMAGE
+        if not hasattr(store, "_mas_dtm_original_chess_indicator_player"):
+            store._mas_dtm_original_chess_indicator_player = store.MASChessDisplayableBase.MOVE_INDICATOR_PLAYER
+        if not hasattr(store, "_mas_dtm_original_chess_indicator_monika"):
+            store._mas_dtm_original_chess_indicator_monika = store.MASChessDisplayableBase.MOVE_INDICATOR_MONIKA
+        if not hasattr(store, "_mas_dtm_original_chess_hl_green"):
+            store._mas_dtm_original_chess_hl_green = store.MASChessDisplayableBase.PIECE_HIGHLIGHT_GREEN_IMAGE
+        if not hasattr(store, "_mas_dtm_original_chess_hl_red"):
+            store._mas_dtm_original_chess_hl_red = store.MASChessDisplayableBase.PIECE_HIGHLIGHT_RED_IMAGE
+        if not hasattr(store, "_mas_dtm_original_chess_hl_yellow"):
+            store._mas_dtm_original_chess_hl_yellow = store.MASChessDisplayableBase.PIECE_HIGHLIGHT_YELLOW_IMAGE
+        if not hasattr(store, "_mas_dtm_original_chess_hl_magenta"):
+            store._mas_dtm_original_chess_hl_magenta = store.MASChessDisplayableBase.PIECE_HIGHLIGHT_MAGENTA_IMAGE
+
+        board_path = os.path.join(chess_folder, "chess_board.png")
+        if os.path.isfile(board_path):
+            store.MASChessDisplayableBase.BOARD_IMAGE = renpy.display.im.Image(_get_rel_path(board_path))
+
+        ind_player_path = os.path.join(chess_folder, "move_indicator_player.png")
+        if os.path.isfile(ind_player_path):
+            store.MASChessDisplayableBase.MOVE_INDICATOR_PLAYER = renpy.display.im.Image(_get_rel_path(ind_player_path))
+
+        ind_monika_path = os.path.join(chess_folder, "move_indicator_monika.png")
+        if os.path.isfile(ind_monika_path):
+            store.MASChessDisplayableBase.MOVE_INDICATOR_MONIKA = renpy.display.im.Image(_get_rel_path(ind_monika_path))
+
+        _chess_hl_map = {
+            "piece_highlight_green.png": "PIECE_HIGHLIGHT_GREEN_IMAGE",
+            "piece_highlight_red.png": "PIECE_HIGHLIGHT_RED_IMAGE",
+            "piece_highlight_yellow.png": "PIECE_HIGHLIGHT_YELLOW_IMAGE",
+            "piece_highlight_magenta.png": "PIECE_HIGHLIGHT_MAGENTA_IMAGE",
+        }
+        for fname, attr in _chess_hl_map.items():
+            fpath = os.path.join(chess_folder, fname)
+            if os.path.isfile(fpath):
+                setattr(store.MASChessDisplayableBase, attr, renpy.display.im.Image(_get_rel_path(fpath)))
+
+        pieces_dir = os.path.join(chess_folder, "pieces")
+        if os.path.isdir(pieces_dir):
+            for fname in os.listdir(pieces_dir):
+                if not fname.lower().endswith(".png"):
+                    continue
+                key = fname[:-4]
+                piece_file_path = os.path.join(pieces_dir, fname)
+                rel_piece_path = _get_rel_path(piece_file_path)
+                for img_map_key in store.MASPiece.IMG_MAP:
+                    if img_map_key.lower() == key.lower():
+                        store.MASPiece.IMG_MAP[img_map_key] = renpy.display.im.Image(rel_piece_path)
+
+        renpy.display.im.cache.clear()
+        if not startup:
+            force_update_mas_visuals()
+
+    # ==========================================
+    # LÓGICA DE INYECCIÓN - JUEGOS (NOU)
+    # ==========================================
+    def apply_nou_overrides(sync=True):
+        nou_folder = store.mas_dtm_overrides.get("nou_theme", None)
+        if not nou_folder:
+            return
+        _finish_apply_nou_overrides(startup=sync)
+
+    def _finish_apply_nou_overrides(startup=False):
+        nou_folder_raw = store.mas_dtm_overrides.get("nou_theme", None)
+        nou_folder = None
+        if nou_folder_raw:
+            nou_folder = nou_folder_raw if os.path.isabs(nou_folder_raw) else os.path.join(store.DTM_BASE_PARENT, nou_folder_raw)
+
+        if not nou_folder or not os.path.isdir(nou_folder):
+            return
+
+        # Construir índice NOU en memoria
+        nou_index = {}
+        for sub in ["cards", "desks", "sfx"]:
+            sub_dir = os.path.join(nou_folder, sub)
+            if os.path.isdir(sub_dir):
+                for root, dirs, files in os.walk(sub_dir):
+                    for f in files:
+                        if f.lower().endswith(".png") or f.lower().endswith(".ogg") or f.lower().endswith(".wav"):
+                            abs_path = os.path.join(root, f)
+                            rel_path_in_sub = os.path.relpath(abs_path, nou_folder).replace("\\", "/")
+                            rel_clean = _get_rel_path(abs_path)
+                            nou_index[rel_path_in_sub.lower()] = rel_clean
+                            nou_index[f.lower()] = rel_clean
+
+        note_path = os.path.join(nou_folder, "note.png")
+        store._mas_dtm_nou_note = _get_rel_path(note_path) if os.path.isfile(note_path) else None
+        pen_path = os.path.join(nou_folder, "pen.png")
+        store._mas_dtm_nou_pen = _get_rel_path(pen_path) if os.path.isfile(pen_path) else None
+        
+        store._mas_dtm_nou_index = nou_index
+
+        if not hasattr(store, "_mas_dtm_original_nou_init") and hasattr(store, "mas_nou"):
+            store._mas_dtm_original_nou_init = store.mas_nou.NOU.__init__
+        
+        def custom_nou_init(self, *args, **kwargs):
+            store._mas_dtm_original_nou_init(self, *args, **kwargs)
+            idx = getattr(store, "_mas_dtm_nou_index", {})
+            back_key = "cards/back.png"
+            if back_key in idx:
+                back_img = store.MASFilterSwitch(idx[back_key])
+                self.table.back = back_img
+                for card_obj in self.table.cards.values():
+                    card_obj.back = back_img
+        
+        if hasattr(store, "mas_nou"):
+            store.mas_nou.NOU.__init__ = custom_nou_init
+        
+        if hasattr(store, "mas_nou") and not hasattr(store, "_mas_dtm_original_load_card_asset"):
+            store._mas_dtm_original_load_card_asset = store.mas_nou.NOU._m1_zz_cardgames__load_card_asset
+        
+        def custom_load_card_asset(self, card):
+            store._mas_dtm_original_load_card_asset(self, card)
+            card_png = self._m1_zz_cardgames__get_card_filename(card)
+            card_key = "cards/" + card_png.lower() + ".png"
+            idx = getattr(store, "_mas_dtm_nou_index", {})
+            
+            if card_key in idx:
+                self.table.card(card, idx[card_key])
+                self.table.set_faceup(card, False)
+        
+        if hasattr(store, "mas_nou"):
+            store.mas_nou.NOU._m1_zz_cardgames__load_card_asset = custom_load_card_asset
+        
+        if not hasattr(store, "_mas_dtm_original_filter_switch"):
+            store._mas_dtm_original_filter_switch = store.MASFilterSwitch
+        
+        def custom_filter_switch(img):
+            if isinstance(img, basestring):
+                if img == "mod_assets/games/nou/note.png" and getattr(store, "_mas_dtm_nou_note", None):
+                    img = store._mas_dtm_nou_note
+                elif img == "mod_assets/games/nou/pen.png" and getattr(store, "_mas_dtm_nou_pen", None):
+                    img = store._mas_dtm_nou_pen
+            return store._mas_dtm_original_filter_switch(img)
+        
+        store.MASFilterSwitch = custom_filter_switch
+        
+        if hasattr(store, "mas_cardgames") and hasattr(store, "mas_background"):
+            store.mas_cardgames.DESK_SPRITES_MAP.clear()
+            idx = getattr(store, "_mas_dtm_nou_index", {})
+            fb_key = "desks/" + store.mas_background.MBG_DEF.lower() + ".png"
+            fb_val = idx.get(fb_key)
+            for bg_id in store.mas_background.BACKGROUND_MAP:
+                if bg_id not in store.mas_cardgames.DESK_SPRITES_MAP:
+                    bg_key = "desks/" + bg_id.lower() + ".png"
+                    filename_rel = idx.get(bg_key, fb_val)
+                    if filename_rel:
+                        store.mas_cardgames.DESK_SPRITES_MAP[bg_id] = store.MASFilterSwitch(filename_rel)
+        
+        if hasattr(store, "mas_nou"):
+            sfx_dir = os.path.join(nou_folder, "sfx")
+            if os.path.isdir(sfx_dir):
+                name_to_sfx_list_map = {
+                    "shuffle": store.mas_nou.NOU.SFX_SHUFFLE,
+                    "move": store.mas_nou.NOU.SFX_MOVE,
+                    "slide": store.mas_nou.NOU.SFX_DRAW,
+                    "place": store.mas_nou.NOU.SFX_PLAY,
+                    "shove": store.mas_nou.NOU.SFX_PLAY
+                }
+                found_types = set()
+                idx = getattr(store, "_mas_dtm_nou_index", {})
+                for f in os.listdir(sfx_dir):
+                    if f.endswith(store.mas_nou.NOU.SFX_EXT):
+                        found_types.add(f.partition("_")[0])
+                
+                for t in found_types:
+                    lst = name_to_sfx_list_map.get(t)
+                    if lst is not None:
+                        del lst[:]
+                
+                for f in os.listdir(sfx_dir):
+                    if f.endswith(store.mas_nou.NOU.SFX_EXT):
+                        lst = name_to_sfx_list_map.get(f.partition("_")[0])
+                        if lst is not None:
+                            f_key = "sfx/" + f.lower()
+                            val = idx.get(f_key)
+                            if val:
+                                lst.append(val)
+        
+        renpy.display.im.cache.clear()
+        if not startup:
+            force_update_mas_visuals()
+
+
+init 1000 python:
+    if hasattr(store, "dtm_core") and store.dtm_core:
+        store.dtm_core.apply_sprite_overrides()
+        store.dtm_core.apply_body_overrides()
+        if hasattr(store, "MASChessDisplayableBase"):
+            store.dtm_core.apply_chess_overrides(sync=True)
+        store.dtm_core.apply_pong_overrides()
+        store.dtm_core.apply_nou_overrides(sync=True)
