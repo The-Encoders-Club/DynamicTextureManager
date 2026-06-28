@@ -1,4 +1,3 @@
-# dtm_header.rpy
 init -990 python:
     store.mas_submod_utils.Submod(
         author="The Encoders Club",

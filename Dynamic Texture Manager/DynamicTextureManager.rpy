@@ -1,9 +1,8 @@
-# DynamicTextureManager.rpy
 init -10 python:
     import json
     import os
 
-    # Inicializar el almacén de variables
+    # Initialize the variable store
     store.mas_dtm_overrides = {
         "eyes_theme": None,
         "mouth_theme": None,
@@ -22,7 +21,7 @@ init -10 python:
             except Exception:
                 pass
 
-    # Configuración de rutas compatibles con PC
+    # PC compatible path configuration
     store.DTM_BASE_PARENT = renpy.config.basedir
 
     if store.DTM_BASE_PARENT not in renpy.config.searchpath:
@@ -67,7 +66,7 @@ init 999 python in dtm_core:
     import os
     import shutil
 
-    # Python 2 and Python 3 compatibility helper
+    # Python compatibility helper
     try:
         basestring
     except NameError:
@@ -111,7 +110,7 @@ init 999 python in dtm_core:
         renpy.restart_interaction()
 
     # ==========================================
-    # API DE CONTROL VISUAL - ROSTRO
+    # VISUAL CONTROL API - FACE
     # ==========================================
     def set_eyes_textures(folder_path):
         store.mas_dtm_overrides["eyes_theme"] = _make_portable_path(folder_path)
@@ -156,7 +155,7 @@ init 999 python in dtm_core:
         force_update_mas_visuals()
 
     # ==========================================
-    # API DE CONTROL VISUAL - CUERPO
+    # VISUAL CONTROL API - BODY
     # ==========================================
     def set_body_textures(folder_path):
         store.mas_dtm_overrides["body_theme"] = _make_portable_path(folder_path)
@@ -183,7 +182,7 @@ init 999 python in dtm_core:
         force_update_mas_visuals()
 
     # ==========================================
-    # API DE CONTROL VISUAL - JUEGOS
+    # VISUAL CONTROL API - GAMES
     # ==========================================
     def set_pong_textures(folder_path):
         store.mas_dtm_overrides["pong_field"] = _make_portable_path(folder_path)
@@ -254,7 +253,7 @@ init 999 python in dtm_core:
         force_update_mas_visuals()
 
     # ==========================================
-    # LÓGICA DE INYECCIÓN - CUERPO
+    # INJECTION LOGIC - BODY
     # ==========================================
     def apply_body_overrides():
         body_folder_raw = store.mas_dtm_overrides.get("body_theme", None)
@@ -534,7 +533,7 @@ init 999 python in dtm_core:
             pass
 
     # ==========================================
-    # LÓGICA DE INYECCIÓN - ROSTRO
+    # INJECTION LOGIC - FACE
     # ==========================================
     def apply_sprite_overrides():
         if not hasattr(store, "_mas_dtm_original_rk_face"):
@@ -676,7 +675,7 @@ init 999 python in dtm_core:
         store.mas_sprites._rk_face = custom_rk_face
 
     # ==========================================
-    # LÓGICA DE INYECCIÓN - JUEGOS (PONG)
+    # INJECTION LOGIC - GAMES (PONG)
     # ==========================================
     def apply_pong_overrides():
         pong_folder_raw = store.mas_dtm_overrides.get("pong_field", None)
@@ -714,7 +713,7 @@ init 999 python in dtm_core:
             store.PongDisplayable.__init__ = custom_pong_init
 
     # ==========================================
-    # LÓGICA DE INYECCIÓN - JUEGOS (CHESS)
+    # INJECTION LOGIC - GAMES (CHESS)
     # ==========================================
     def apply_chess_overrides(sync=True):
         chess_folder = store.mas_dtm_overrides.get("chess_theme", None)
@@ -792,7 +791,7 @@ init 999 python in dtm_core:
             force_update_mas_visuals()
 
     # ==========================================
-    # LÓGICA DE INYECCIÓN - JUEGOS (NOU)
+    # INJECTION LOGIC - GAMES (NOU)
     # ==========================================
     def apply_nou_overrides(sync=True):
         nou_folder = store.mas_dtm_overrides.get("nou_theme", None)
@@ -809,7 +808,7 @@ init 999 python in dtm_core:
         if not nou_folder or not os.path.isdir(nou_folder):
             return
 
-        # Construir índice NOU en memoria
+        # Build NOU index in memory
         nou_index = {}
         for sub in ["cards", "desks", "sfx"]:
             sub_dir = os.path.join(nou_folder, sub)

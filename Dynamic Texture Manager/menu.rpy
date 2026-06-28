@@ -4,7 +4,7 @@ init 5 python:
         Event(
             persistent.event_database,
             eventlabel="mas_dtm_change_textures",
-            category=[_("appearance")],
+            category=["appearance"],
             prompt=_("Change Textures"),
             pool=True,
             unlocked=True
@@ -34,68 +34,36 @@ init python:
                         folders.append(d)
         return folders
 
-screen mas_dtm_choice_menu(items):
-    style_prefix "scrollable_menu"
+    def mas_dtm_get_dialogue_categories(pool=True):
+        import store.evhand as evhand
 
-    python:
-        has_back = False
-        back_item = None
-        viewport_items = list(items)
+        def mas_get_cat_label_safe(cat):
+            if hasattr(store, "mas_get_cat_label"):
+                return store.mas_get_cat_label(cat)
+            return cat
 
-        if len(items) > 0:
-            last_item = items[-1]
-            is_back = False
-            if last_item.caption in ("Back", "Atrás", _("Back"), _("Atrás"), "Return"):
-                is_back = True
-            elif hasattr(last_item.action, "value") and last_item.action.value in ("return", "back", "dtm_pc_main", "dtm_pc_monika", "dtm_pc_games"):
-                is_back = True
-                
-            if is_back:
-                has_back = True
-                back_item = last_item
-                viewport_items = items[:-1]
-
-        # Calculate exact height of the viewport content (approx 52px per item)
-        vp_ymax = 480 if has_back else 550
-        vp_height = min(len(viewport_items) * 52, vp_ymax)
-
-    fixed:
-        area (680, 40, 560, 640)
-
-        vbox:
-            xpos 0
-            ypos 0
-            xanchor 0
-            yanchor 0
-
-            viewport:
-                id "mas_dtm_viewport"
-                yfill False
-                mousewheel True
-                draggable True
-                ymaximum vp_ymax
-                ysize vp_height
-
-                has vbox
-                for i in viewport_items:
-                    textbutton renpy.substitute(i.caption):
-                        text_style "scrollable_menu_button_text"
-                        xsize 560
-                        action i.action
-
-            if has_back:
-                null height 15
-                textbutton renpy.substitute(back_item.caption):
-                    text_style "scrollable_menu_button_text"
-                    xsize 560
-                    action back_item.action
-
-        bar:
-            style "classroom_vscrollbar"
-            value YScrollValue("mas_dtm_viewport")
-            unscrollable "hide"
-            xalign -0.05
-            ysize vp_height
+        unlocked_events = store.Event.filterEvents(
+            evhand.event_database,
+            unlocked=True,
+            pool=pool,
+            aff=store.mas_curr_affection,
+            flag_ban=store.EV_FLAG_HFM
+        )
+        main_cat_list = list()
+        no_cat_list = list()
+        for key in unlocked_events:
+            if unlocked_events[key].category:
+                evhand.addIfNew(unlocked_events[key].category, main_cat_list)
+            else:
+                no_cat_list.append(unlocked_events[key])
+        
+        main_cat_list.sort(key=lambda x: mas_get_cat_label_safe(x).lower())
+        no_cat_list.sort(key=store.Event.getSortPrompt)
+        
+        dis_cat_list = [(mas_get_cat_label_safe(x).capitalize() + "...", x) for x in main_cat_list]
+        no_cat_list = [(x.prompt, x.eventlabel) for x in no_cat_list]
+        dis_cat_list.extend(no_cat_list)
+        return dis_cat_list, main_cat_list
 
 label mas_dtm_change_textures:
     python:
@@ -114,208 +82,167 @@ label mas_dtm_change_textures:
             if not os.path.exists(cat_dir):
                 os.makedirs(cat_dir)
 
-    jump dtm_pc_main
+        # Initialize submod menu state
+        dtm_current_view = "main"
+        dtm_nav_stack = []
+        dtm_exit = False
+        dtm_action_to_run = None
+        dtm_prev_items, dtm_prev_cats = mas_dtm_get_dialogue_categories(pool=True)
 
-label dtm_pc_main:
-    python:
-        dtm_main_items = [
-            (_("Monika"), "dtm_pc_monika"),
-            (_("Games"), "dtm_pc_games"),
-            (_("Back"), "return")
-        ]
-    $ result = renpy.display_menu(dtm_main_items, screen="mas_dtm_choice_menu")
-    if result == "return":
+    # Move Monika to the left pane layout position
+    show monika at t21
+
+    while not dtm_exit:
+        # Use precomputed categories to eliminate click lag
+        $ prev_items = dtm_prev_items
+
+        python:
+            # Build items for right pane based on current view
+            if dtm_current_view == "main":
+                main_items = [
+                    (_("Monika"), "dtm_monika"),
+                    (_("Games"), "dtm_games")
+                ]
+            elif dtm_current_view == "dtm_monika":
+                main_items = [
+                    (_("Eyes"), "dtm_scan_eyes"),
+                    (_("Mouth"), "dtm_scan_mouth"),
+                    (_("Nose"), "dtm_scan_nose"),
+                    (_("Body"), "dtm_scan_body")
+                ]
+            elif dtm_current_view == "dtm_games":
+                main_items = [
+                    (_("Chess"), "dtm_scan_chess"),
+                    (_("Pong"), "dtm_scan_pong"),
+                    (_("NOU"), "dtm_scan_nou")
+                ]
+            elif dtm_current_view.startswith("dtm_scan_"):
+                sub_path = dtm_current_view[9:]
+                folder_map = {
+                    "eyes": "monika/eyes",
+                    "mouth": "monika/mouth",
+                    "nose": "monika/nose",
+                    "body": "monika/body",
+                    "chess": "games/chess",
+                    "pong": "games/pong",
+                    "nou": "games/nou"
+                }
+                folders = mas_dtm_get_texture_folders(folder_map.get(sub_path, sub_path))
+                main_items = [(f, "apply:" + sub_path + ":" + f) for f in folders]
+                main_items.append((_("Restore Original"), "restore:" + sub_path))
+                
+            elif dtm_current_view.startswith("category:"):
+                cat_name = dtm_current_view[9:]
+                import store.evhand as evhand
+                unlocked_events = store.Event.filterEvents(
+                    evhand.event_database,
+                    category=(False, [cat_name]),
+                    unlocked=True,
+                    pool=True,
+                    aff=store.mas_curr_affection,
+                    flag_ban=store.EV_FLAG_HFM
+                )
+                sorted_events = sorted(unlocked_events.values(), key=store.Event.getSortPrompt)
+                main_items = [(x.prompt, x.eventlabel) for x in sorted_events]
+
+            # Add Back option only in DTM's own sub-views, not in left-panel category views
+            if dtm_current_view != "main" and not dtm_current_view.startswith("category:"):
+                main_items.append((_("Back"), "back"))
+
+            # Register DTM-internal action values in namemap so renpy.has_label() returns True
+            # for them, preventing the twopane screen from applying the bold "special_button" style.
+            # Only registers strings that aren't already real Ren'Py labels.
+            for _item_title, _action_val in main_items:
+                if isinstance(_action_val, basestring) and not renpy.has_label(_action_val):
+                    renpy.game.script.namemap[_action_val] = renpy.game.script.namemap["mas_dtm_change_textures"]
+
+        # Call the native MAS twopane screen directly. We pass 1 as cat_length to hide the native Go Back button on the left.
+        call screen twopane_scrollable_menu(prev_items, main_items, store.evhand.LEFT_AREA, store.evhand.LEFT_XALIGN, store.evhand.RIGHT_AREA, store.evhand.RIGHT_XALIGN, 1) nopredict
+
+        python:
+            # Reset action state
+            dtm_action_to_run = None
+            
+            # Safe parsing of native screen return
+            if _return is False or _return is None or _return == "nevermind":
+                dtm_exit = True
+                
+            elif _return == "back":
+                if len(dtm_nav_stack) > 0:
+                    dtm_current_view = dtm_nav_stack.pop()
+                else:
+                    dtm_current_view = "main"
+                    
+            elif _return in dtm_prev_cats:
+                # Clicked a category on the left panel: navigate into that category within DTM
+                dtm_nav_stack.append(dtm_current_view)
+                dtm_current_view = "category:" + _return[0] if isinstance(_return, list) else "category:" + _return
+                
+            elif isinstance(_return, basestring) and _return.startswith("apply:"):
+                parts = _return.split(":")
+                sub_path = parts[1]
+                folder_name = parts[2]
+                if hasattr(store, "dtm_core"):
+                    import os
+                    folder_map = {
+                        "eyes": ("monika", "eyes"),
+                        "mouth": ("monika", "mouth"),
+                        "nose": ("monika", "nose"),
+                        "body": ("monika", "body"),
+                        "chess": ("games", "chess"),
+                        "pong": ("games", "pong"),
+                        "nou": ("games", "nou")
+                    }
+                    p_sub = folder_map[sub_path]
+                    abs_folder = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], folder_name)
+                    func_map = {
+                        "eyes": store.dtm_core.set_eyes_textures,
+                        "mouth": store.dtm_core.set_mouth_textures,
+                        "nose": store.dtm_core.set_nose_textures,
+                        "body": store.dtm_core.set_body_textures,
+                        "chess": store.dtm_core.set_chess_textures,
+                        "pong": store.dtm_core.set_pong_textures,
+                        "nou": store.dtm_core.set_nou_textures
+                    }
+                    func_map[sub_path](abs_folder)
+                    renpy.notify(_("Texture changed successfully"))
+                    
+            elif isinstance(_return, basestring) and _return.startswith("restore:"):
+                sub_path = _return.split(":")[1]
+                if hasattr(store, "dtm_core"):
+                    func_map = {
+                        "eyes": store.dtm_core.reset_eyes_textures,
+                        "mouth": store.dtm_core.reset_mouth_textures,
+                        "nose": store.dtm_core.reset_nose_textures,
+                        "body": store.dtm_core.reset_body_textures,
+                        "chess": store.dtm_core.reset_chess_textures,
+                        "pong": store.dtm_core.reset_pong_textures,
+                        "nou": store.dtm_core.reset_nou_textures
+                    }
+                    func_map[sub_path]()
+                    renpy.notify(_("Textures restored"))
+                    
+            elif isinstance(_return, basestring) and _return.startswith("dtm_"):
+                # DTM sub-view navigation
+                dtm_nav_stack.append(dtm_current_view)
+                dtm_current_view = _return
+                
+            elif isinstance(_return, basestring) and (renpy.has_label(_return) or _return.startswith("event:")):
+                # Native dialogue selected from search or list: Exit DTM and run it
+                dtm_exit = True
+                dtm_action_to_run = _return.split(":")[1] if _return.startswith("event:") else _return
+
+        # Execute selected conversation event if applicable
+        if dtm_action_to_run:
+            $ store.mas_setEventPause(None)
+            $ store.MASEventList.push(dtm_action_to_run, skipeval=True)
+            $ dtm_exit = True
+
+    # Reset Monika to standard centered position upon exit
+    show monika at t11 with dissolve_monika
+    
+    if not dtm_action_to_run:
+        $ renpy.pop_call()
+        jump prompt_menu
+    else:
         return
-    else:
-        jump expression result
-
-label dtm_pc_monika:
-    python:
-        dtm_m_items = [
-            (_("Eyes"), "dtm_pc_scan_eyes"),
-            (_("Mouth"), "dtm_pc_scan_mouth"),
-            (_("Nose"), "dtm_pc_scan_nose"),
-            (_("Body"), "dtm_pc_scan_body"),
-            (_("Back"), "dtm_pc_main")
-        ]
-    $ result = renpy.display_menu(dtm_m_items, screen="mas_dtm_choice_menu")
-    jump expression result
-
-label dtm_pc_games:
-    python:
-        dtm_g_items = [
-            (_("Chess"), "dtm_pc_scan_chess"),
-            (_("Pong"), "dtm_pc_scan_pong"),
-            (_("NOU"), "dtm_pc_scan_nou"),
-            (_("Back"), "dtm_pc_main")
-        ]
-    $ result = renpy.display_menu(dtm_g_items, screen="mas_dtm_choice_menu")
-    jump expression result
-
-label dtm_pc_scan_eyes:
-    python:
-        folders = mas_dtm_get_texture_folders("monika/eyes")
-        items = [(f, f) for f in folders]
-        items.append((_("Restore Original"), "restaurar"))
-        items.append((_("Back"), "return"))
-    $ result = renpy.display_menu(items, screen="mas_dtm_choice_menu")
-    if result == "return":
-        jump dtm_pc_monika
-    elif result == "restaurar":
-        python:
-            if hasattr(store, "dtm_core"):
-                store.dtm_core.reset_eyes_textures()
-        $ renpy.notify(_("Textures restored"))
-        jump dtm_pc_scan_eyes
-    else:
-        python:
-            if hasattr(store, "dtm_core"):
-                import os
-                eyes_folder = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "eyes", result)
-                store.dtm_core.set_eyes_textures(eyes_folder)
-        $ renpy.notify(_("Texture changed successfully"))
-        jump dtm_pc_scan_eyes
-
-label dtm_pc_scan_mouth:
-    python:
-        folders = mas_dtm_get_texture_folders("monika/mouth")
-        items = [(f, f) for f in folders]
-        items.append((_("Restore Original"), "restaurar"))
-        items.append((_("Back"), "return"))
-    $ result = renpy.display_menu(items, screen="mas_dtm_choice_menu")
-    if result == "return":
-        jump dtm_pc_monika
-    elif result == "restaurar":
-        python:
-            if hasattr(store, "dtm_core"):
-                store.dtm_core.reset_mouth_textures()
-        $ renpy.notify(_("Textures restored"))
-        jump dtm_pc_scan_mouth
-    else:
-        python:
-            if hasattr(store, "dtm_core"):
-                import os
-                mouth_folder = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "mouth", result)
-                store.dtm_core.set_mouth_textures(mouth_folder)
-        $ renpy.notify(_("Texture changed successfully"))
-        jump dtm_pc_scan_mouth
-
-label dtm_pc_scan_nose:
-    python:
-        folders = mas_dtm_get_texture_folders("monika/nose")
-        items = [(f, f) for f in folders]
-        items.append((_("Restore Original"), "restaurar"))
-        items.append((_("Back"), "return"))
-    $ result = renpy.display_menu(items, screen="mas_dtm_choice_menu")
-    if result == "return":
-        jump dtm_pc_monika
-    elif result == "restaurar":
-        python:
-            if hasattr(store, "dtm_core"):
-                store.dtm_core.reset_nose_textures()
-        $ renpy.notify(_("Textures restored"))
-        jump dtm_pc_scan_nose
-    else:
-        python:
-            if hasattr(store, "dtm_core"):
-                import os
-                nose_folder = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "nose", result)
-                store.dtm_core.set_nose_textures(nose_folder)
-        $ renpy.notify(_("Texture changed successfully"))
-        jump dtm_pc_scan_nose
-
-label dtm_pc_scan_body:
-    python:
-        folders = mas_dtm_get_texture_folders("monika/body")
-        items = [(f, f) for f in folders]
-        items.append((_("Restore Original"), "restaurar"))
-        items.append((_("Back"), "return"))
-    $ result = renpy.display_menu(items, screen="mas_dtm_choice_menu")
-    if result == "return":
-        jump dtm_pc_monika
-    elif result == "restaurar":
-        python:
-            if hasattr(store, "dtm_core"):
-                store.dtm_core.reset_body_textures()
-        $ renpy.notify(_("Textures restored"))
-        jump dtm_pc_scan_body
-    else:
-        python:
-            if hasattr(store, "dtm_core"):
-                import os
-                body_folder = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "body", result)
-                store.dtm_core.set_body_textures(body_folder)
-        $ renpy.notify(_("Texture changed successfully"))
-        jump dtm_pc_scan_body
-
-label dtm_pc_scan_chess:
-    python:
-        folders = mas_dtm_get_texture_folders("games/chess")
-        items = [(f, f) for f in folders]
-        items.append((_("Restore Original"), "restaurar"))
-        items.append((_("Back"), "return"))
-    $ result = renpy.display_menu(items, screen="mas_dtm_choice_menu")
-    if result == "return":
-        jump dtm_pc_games
-    elif result == "restaurar":
-        python:
-            if hasattr(store, "dtm_core"):
-                store.dtm_core.reset_chess_textures()
-        $ renpy.notify(_("Textures restored"))
-        jump dtm_pc_scan_chess
-    else:
-        python:
-            if hasattr(store, "dtm_core"):
-                import os
-                chess_folder = os.path.join(store.DTM_BASE_PARENT, "textures", "games", "chess", result)
-                store.dtm_core.set_chess_textures(chess_folder)
-        $ renpy.notify(_("Texture changed successfully"))
-        jump dtm_pc_scan_chess
-
-label dtm_pc_scan_pong:
-    python:
-        folders = mas_dtm_get_texture_folders("games/pong")
-        items = [(f, f) for f in folders]
-        items.append((_("Restore Original"), "restaurar"))
-        items.append((_("Back"), "return"))
-    $ result = renpy.display_menu(items, screen="mas_dtm_choice_menu")
-    if result == "return":
-        jump dtm_pc_games
-    elif result == "restaurar":
-        python:
-            if hasattr(store, "dtm_core"):
-                store.dtm_core.reset_pong_textures()
-        $ renpy.notify(_("Textures restored"))
-        jump dtm_pc_scan_pong
-    else:
-        python:
-            if hasattr(store, "dtm_core"):
-                import os
-                pong_folder = os.path.join(store.DTM_BASE_PARENT, "textures", "games", "pong", result)
-                store.dtm_core.set_pong_textures(pong_folder)
-        $ renpy.notify(_("Texture changed successfully"))
-        jump dtm_pc_scan_pong
-
-label dtm_pc_scan_nou:
-    python:
-        folders = mas_dtm_get_texture_folders("games/nou")
-        items = [(f, f) for f in folders]
-        items.append((_("Restore Original"), "restaurar"))
-        items.append((_("Back"), "return"))
-    $ result = renpy.display_menu(items, screen="mas_dtm_choice_menu")
-    if result == "return":
-        jump dtm_pc_games
-    elif result == "restaurar":
-        python:
-            if hasattr(store, "dtm_core"):
-                store.dtm_core.reset_nou_textures()
-        $ renpy.notify(_("Textures restored"))
-        jump dtm_pc_scan_nou
-    else:
-        python:
-            if hasattr(store, "dtm_core"):
-                import os
-                nou_folder = os.path.join(store.DTM_BASE_PARENT, "textures", "games", "nou", result)
-                store.dtm_core.set_nou_textures(nou_folder)
-        $ renpy.notify(_("Texture changed successfully"))
-        jump dtm_pc_scan_nou
