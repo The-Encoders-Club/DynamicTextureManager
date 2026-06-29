@@ -56,8 +56,8 @@ init -10 python:
                 os.makedirs(textures_dir)
             with open(store.DTM_CONFIG_PATH, "w") as f:
                 json.dump(store.mas_dtm_overrides, f, indent=4)
-        except Exception:
-            pass
+        except Exception as e:
+            renpy.log("DTM: Error saving config: " + str(e))
 
     mas_dtm_load_config()
 
@@ -256,12 +256,12 @@ init 999 python in dtm_core:
     # INJECTION LOGIC - BODY
     # ==========================================
     def apply_body_overrides():
+        import os
         body_folder_raw = store.mas_dtm_overrides.get("body_theme", None)
         body_folder = None
         if body_folder_raw:
             body_folder = body_folder_raw if os.path.isabs(body_folder_raw) else os.path.join(store.DTM_BASE_PARENT, body_folder_raw)
 
-        import os
         mod_art_path = getattr(store.mas_sprites, "MOD_ART_PATH", "mod_assets/monika/").replace("\\", "/")
         body_folder_valid = bool(body_folder and os.path.isdir(body_folder))
 
@@ -536,6 +536,7 @@ init 999 python in dtm_core:
     # INJECTION LOGIC - FACE
     # ==========================================
     def apply_sprite_overrides():
+        import os
         if not hasattr(store, "_mas_dtm_original_rk_face"):
             store._mas_dtm_original_rk_face = store.mas_sprites._rk_face
 
@@ -577,7 +578,6 @@ init 999 python in dtm_core:
             return
 
         face_index = {"eyes": {}, "mouth": {}, "nose": {}}
-        import os
         for key, folder in [("eyes", eyes_folder), ("mouth", mouth_folder), ("nose", nose_folder)]:
             if folder and os.path.isdir(folder):
                 for root, dirs, files in os.walk(folder):

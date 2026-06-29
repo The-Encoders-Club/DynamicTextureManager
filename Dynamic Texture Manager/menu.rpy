@@ -5,7 +5,7 @@ init 5 python:
             persistent.event_database,
             eventlabel="mas_dtm_change_textures",
             category=["appearance"],
-            prompt=_("Change Textures"),
+            prompt=_("I want to change the textures"),
             pool=True,
             unlocked=True
         ),
