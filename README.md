@@ -19,8 +19,8 @@ Unlike the traditional method that requires replacing the base assets of MAS, th
 Follow these simple steps to get the submod running:
 
 1. **Download:** Go to the **Releases** section on the right side of this repository and download the latest `.zip` file.
-2. **Extract:** Extract the contents. You will get a folder named `DTM`.
-3. **Install:** Copy the entire `DTM` folder and paste it into your MAS directory under:
+2. **Extract:** Extract the contents. You will get a folder named `DynamicTextureManager`.
+3. **Install:** Copy the entire `DynamicTextureManager` folder and paste it into your MAS directory under:
    `game/submods/`
 4. **First Launch:** Run your game once. The submod will automatically generate the required `textures/` directory at your game's root folder, alongside the `config.json` file.
 5. **Add Your Textures:** Close the game, navigate into the newly generated `textures/` folder at the root level, and drop your community texture packs into their corresponding categories!
@@ -65,7 +65,7 @@ Drop your custom `.png` files directly inside your newly created folder.
 > The folder must only contain image files, and the filenames must match the original game asset names exactly so the loader can map them correctly.
 
 ### 3. Change Textures In-Game
-1. Launch MAS and click on **Talk** ➡️ **Hey, Monika...** ➡️ **Appearance** ➡️ **"Change Textures"**.
+1. Launch MAS and click on **Talk** → **Hey, Monika...** → **Appearance** → **"I want to change the textures"**.
 2. A custom menu will appear listing all the folders you created.
 3. Select your pack, and the textures will update instantly on your screen without requiring a restart!
 
