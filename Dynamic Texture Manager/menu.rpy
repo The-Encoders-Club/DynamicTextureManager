@@ -89,6 +89,16 @@ label mas_dtm_change_textures:
         dtm_action_to_run = None
         dtm_prev_items, dtm_prev_cats = mas_dtm_get_dialogue_categories(pool=True)
 
+        # Hook main_adj.changed callback to save scroll position on scroll events
+        store.dtm_original_changed = store.main_adj.changed
+        store._dtm_last_scroll_value = 0
+        def dtm_on_scroll(value):
+            if value > 0:
+                store._dtm_last_scroll_value = value
+            if store.dtm_original_changed:
+                store.dtm_original_changed(value)
+        store.main_adj.changed = dtm_on_scroll
+
     # Move Monika to the left pane layout position
     show monika at t21
 
@@ -172,11 +182,13 @@ label mas_dtm_change_textures:
                     dtm_current_view = dtm_nav_stack.pop()
                 else:
                     dtm_current_view = "main"
+                store._dtm_last_scroll_value = 0
                     
             elif _return in dtm_prev_cats:
                 # Clicked a category on the left panel: navigate into that category within DTM
                 dtm_nav_stack.append(dtm_current_view)
                 dtm_current_view = "category:" + _return[0] if isinstance(_return, list) else "category:" + _return
+                store._dtm_last_scroll_value = 0
                 
             elif isinstance(_return, basestring) and _return.startswith("apply:"):
                 parts = _return.split(":")
@@ -226,17 +238,30 @@ label mas_dtm_change_textures:
                 # DTM sub-view navigation
                 dtm_nav_stack.append(dtm_current_view)
                 dtm_current_view = _return
+                store._dtm_last_scroll_value = 0
                 
             elif isinstance(_return, basestring) and (renpy.has_label(_return) or _return.startswith("event:")):
                 # Native dialogue selected from search or list: Exit DTM and run it
                 dtm_exit = True
                 dtm_action_to_run = _return.split(":")[1] if _return.startswith("event:") else _return
 
+            # Restore the scroll position for the next iteration of the screen loop
+            if not dtm_exit:
+                store.main_adj.change(store._dtm_last_scroll_value)
+
         # Execute selected conversation event if applicable
         if dtm_action_to_run:
             $ store.mas_setEventPause(None)
             $ store.MASEventList.push(dtm_action_to_run, skipeval=True)
             $ dtm_exit = True
+
+    python:
+        if hasattr(store, "dtm_original_changed"):
+            store.main_adj.changed = store.dtm_original_changed
+            store.main_adj.change(0)
+            del store.dtm_original_changed
+        if hasattr(store, "_dtm_last_scroll_value"):
+            del store._dtm_last_scroll_value
 
     # Reset Monika to standard centered position upon exit
     show monika at t11 with dissolve_monika
