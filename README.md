@@ -38,16 +38,30 @@ MAS_Root_Directory/
 │           └── dtm.rpy          <-- Core logic (File scanning & runtime swapping)
 └── textures/                    <-- Main assets folder (Auto-generated at the root)
     ├── config.json              <-- Auto-generated (Maintains persistence after restart)
+    ├── accessories/
+    │   ├── hotchoc_mug/         └── [Your_Pack_Folder]/
+    │   ├── mug/                 └── [Your_Pack_Folder]/
+    │   ├── promisering/         └── [Your_Pack_Folder]/
+    │   ├── quetzal/             └── [Your_Pack_Folder]/ -> (Normal and mid poses)
+    │   ├── roses/               └── [Your_Pack_Folder]/
+    │   └── thermos_mug/         └── [Your_Pack_Folder]/
     ├── games/
-    │   ├── chess/               └── [Your_Pack_Folder]/ -> (Only .png files inside)
+    │   ├── chess/               └── [Your_Pack_Folder]/
     │   ├── nou/                 └── [Your_Pack_Folder]/
     │   └── pong/                └── [Your_Pack_Folder]/
-    └── monika/
-        ├── body/                └── [Your_Pack_Folder]/
-        ├── ears/                └── [Your_Pack_Folder]/
-        ├── eyes/                └── [Your_Pack_Folder]/
-        ├── mouth/               └── [Your_Pack_Folder]/
-        └── nose/                └── [Your_Pack_Folder]/
+    ├── monika/
+    │   ├── arms/                └── [Your_Pack_Folder]/
+    │   ├── blush/               └── [Your_Pack_Folder]/
+    │   ├── body/                └── [Your_Pack_Folder]/
+    │   ├── eyebrows/            └── [Your_Pack_Folder]/
+    │   ├── eyes/                └── [Your_Pack_Folder]/
+    │   ├── mouth/               └── [Your_Pack_Folder]/
+    │   ├── nose/                └── [Your_Pack_Folder]/
+    │   ├── sweatdrop/           └── [Your_Pack_Folder]/
+    │   ├── tears/               └── [Your_Pack_Folder]/
+    │   └── torso/               └── [Your_Pack_Folder]/
+    └── room/
+        └── calendar/            └── [Your_Pack_Folder]/
 ```
 
 ## 📖 How to Use

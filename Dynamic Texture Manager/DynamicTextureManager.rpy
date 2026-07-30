@@ -2,12 +2,24 @@ init -10 python:
     import json
     import os
 
-    # Initialize the variable store
     store.mas_dtm_overrides = {
         "eyes_theme": None,
+        "eyebrows_theme": None,
         "mouth_theme": None,
         "nose_theme": None,
+        "blush_theme": None,
+        "tears_theme": None,
+        "sweatdrop_theme": None,
+        "arms_theme": None,
+        "torso_theme": None,
         "body_theme": None,
+        "mug_theme": None,
+        "hotchoc_theme": None,
+        "promisering_theme": None,
+        "quetzal_theme": None,
+        "roses_theme": None,
+        "thermos_theme": None,
+        "calendar_theme": None,
         "chess_theme": None,
         "pong_field": None,
         "nou_theme": None
@@ -157,9 +169,22 @@ init 999 python in dtm_core:
             dtm_log("Rebuilding all texture indexes...")
             store._mas_dtm_indexes = {
                 "eyes": {},
+                "eyebrows": {},
                 "mouth": {},
                 "nose": {},
+                "blush": {},
+                "tears": {},
+                "sweatdrop": {},
+                "arms": {},
+                "torso": {},
                 "body": {},
+                "mug": {},
+                "hotchoc_mug": {},
+                "promisering": {},
+                "quetzal": {},
+                "roses": {},
+                "thermos_mug": {},
+                "calendar": {},
                 "chess": {},
                 "pong": {},
                 "nou": {}
@@ -167,9 +192,22 @@ init 999 python in dtm_core:
             
             category_paths = {
                 "eyes": ("monika", "eyes"),
+                "eyebrows": ("monika", "eyebrows"),
                 "mouth": ("monika", "mouth"),
                 "nose": ("monika", "nose"),
+                "blush": ("monika", "blush"),
+                "tears": ("monika", "tears"),
+                "sweatdrop": ("monika", "sweatdrop"),
+                "arms": ("monika", "arms"),
+                "torso": ("monika", "torso"),
                 "body": ("monika", "body"),
+                "mug": ("accessories", "mug"),
+                "hotchoc_mug": ("accessories", "hotchoc_mug"),
+                "promisering": ("accessories", "promisering"),
+                "quetzal": ("accessories", "quetzal"),
+                "roses": ("accessories", "roses"),
+                "thermos_mug": ("accessories", "thermos_mug"),
+                "calendar": ("room", "calendar"),
                 "chess": ("games", "chess"),
                 "pong": ("games", "pong"),
                 "nou": ("games", "nou")
@@ -202,9 +240,22 @@ init 999 python in dtm_core:
     # Mapping from standard MAS asset prefixes to their corresponding DTM categories
     category_prefixes = {
         "eyes": "mod_assets/monika/f/",
+        "eyebrows": "mod_assets/monika/f/",
         "mouth": "mod_assets/monika/f/",
         "nose": "mod_assets/monika/f/",
+        "blush": "mod_assets/monika/f/",
+        "tears": "mod_assets/monika/f/",
+        "sweatdrop": "mod_assets/monika/f/",
+        "arms": "mod_assets/monika/b/",
+        "torso": "mod_assets/monika/b/",
         "body": "mod_assets/monika/b/",
+        "mug": "mod_assets/monika/a/mug/",
+        "hotchoc_mug": "mod_assets/monika/a/hotchoc_mug/",
+        "promisering": "mod_assets/monika/a/promisering/",
+        "quetzal": "mod_assets/monika/a/",
+        "roses": "mod_assets/monika/a/roses/",
+        "thermos_mug": "mod_assets/monika/a/thermos_mug/",
+        "calendar": "mod_assets/calendar/",
         "chess": "mod_assets/games/chess/",
         "pong": "mod_assets/games/pong/",
         "nou": "mod_assets/games/nou/"
@@ -212,18 +263,83 @@ init 999 python in dtm_core:
 
     category_to_config_key = {
         "eyes": "eyes_theme",
+        "eyebrows": "eyebrows_theme",
         "mouth": "mouth_theme",
         "nose": "nose_theme",
+        "blush": "blush_theme",
+        "tears": "tears_theme",
+        "sweatdrop": "sweatdrop_theme",
+        "arms": "arms_theme",
+        "torso": "torso_theme",
         "body": "body_theme",
+        "mug": "mug_theme",
+        "hotchoc_mug": "hotchoc_theme",
+        "promisering": "promisering_theme",
+        "quetzal": "quetzal_theme",
+        "roses": "roses_theme",
+        "thermos_mug": "thermos_theme",
+        "calendar": "calendar_theme",
         "chess": "chess_theme",
         "pong": "pong_field",
         "nou": "nou_theme"
     }
 
+    def get_category_for_path(norm_name):
+        if norm_name.startswith("mod_assets/monika/f/"):
+            if "eyes-" in norm_name:
+                return "eyes"
+            elif "eyebrows-" in norm_name:
+                return "eyebrows"
+            elif "mouth-" in norm_name:
+                return "mouth"
+            elif "nose-" in norm_name:
+                return "nose"
+            elif "blush-" in norm_name:
+                return "blush"
+            elif "tears-" in norm_name:
+                return "tears"
+            elif "sweatdrop-" in norm_name:
+                return "sweatdrop"
+        elif norm_name.startswith("mod_assets/monika/b/"):
+            if "arms-" in norm_name:
+                return "arms"
+            elif "body-" in norm_name:
+                return "torso"
+            else:
+                return "body"
+        elif norm_name.startswith("mod_assets/monika/a/"):
+            if "mug/" in norm_name:
+                return "mug"
+            elif "hotchoc_mug/" in norm_name:
+                return "hotchoc_mug"
+            elif "promisering/" in norm_name:
+                return "promisering"
+            elif "quetzalplushie/" in norm_name or "quetzalplushie_mid/" in norm_name:
+                return "quetzal"
+            elif "roses/" in norm_name:
+                return "roses"
+            elif "thermos_mug/" in norm_name:
+                return "thermos_mug"
+        elif norm_name.startswith("mod_assets/calendar/"):
+            return "calendar"
+        elif norm_name.startswith("mod_assets/games/chess/"):
+            return "chess"
+        elif norm_name.startswith("mod_assets/games/pong/"):
+            return "pong"
+        elif norm_name.startswith("mod_assets/games/nou/"):
+            return "nou"
+        return None
+
     def get_custom_override(category, requested_path):
         try:
             # Get active theme from configuration
             overrides = getattr(store, "mas_dtm_overrides", {})
+            
+            # Fallback check for arms/torso to body
+            if category in ("arms", "torso") and not overrides.get(category_to_config_key.get(category)):
+                if overrides.get("body_theme"):
+                    category = "body"
+                    
             config_key = category_to_config_key.get(category)
             theme_path = overrides.get(config_key)
             if not theme_path:
@@ -257,13 +373,21 @@ init 999 python in dtm_core:
                 candidates.append(rel_part)
             candidates.append(basename)
             
-            if category in ("eyes", "mouth", "nose"):
+            if category in ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop"):
                 pfx_key = category + "-"
                 if pfx_key in basename:
                     code = basename.partition(pfx_key)[2]
                     candidates.append(pfx_key + code)
                     candidates.append(code)
+                    candidates.append("face-" + pfx_key + code)
+                    candidates.append("face-leaning-def-" + pfx_key + code)
                     
+            elif category == "arms":
+                if "arms-" in basename:
+                    candidates.append(basename.partition("arms-")[2])
+            elif category == "torso":
+                if "body-" in basename:
+                    candidates.append(basename.partition("body-")[2])
             elif category == "body":
                 if "body-" in basename:
                     candidates.append(basename.partition("body-")[2])
@@ -304,24 +428,7 @@ init 999 python in dtm_core:
             norm_name = real_name.replace("\\", "/").lower()
             
             override = None
-            
-            # Determine category of requested resource
-            category = None
-            if norm_name.startswith("mod_assets/monika/f/"):
-                if "eyes-" in norm_name:
-                    category = "eyes"
-                elif "mouth-" in norm_name:
-                    category = "mouth"
-                elif "nose-" in norm_name:
-                    category = "nose"
-            elif norm_name.startswith("mod_assets/monika/b/"):
-                category = "body"
-            elif norm_name.startswith("mod_assets/games/chess/"):
-                category = "chess"
-            elif norm_name.startswith("mod_assets/games/pong/"):
-                category = "pong"
-            elif norm_name.startswith("mod_assets/games/nou/"):
-                category = "nou"
+            category = get_category_for_path(norm_name)
                 
             if category:
                 override = get_custom_override(category, norm_name)
@@ -355,25 +462,14 @@ init 999 python in dtm_core:
             if not isinstance(filename, basestring):
                 return None
             norm_name = filename.replace("\\", "/").lower()
-            category = None
-            if norm_name.startswith("mod_assets/monika/f/"):
-                if "eyes-" in norm_name:
-                    category = "eyes"
-                elif "mouth-" in norm_name:
-                    category = "mouth"
-                elif "nose-" in norm_name:
-                    category = "nose"
-            elif norm_name.startswith("mod_assets/monika/b/"):
-                category = "body"
-            elif norm_name.startswith("mod_assets/games/chess/"):
-                category = "chess"
-            elif norm_name.startswith("mod_assets/games/pong/"):
-                category = "pong"
-            elif norm_name.startswith("mod_assets/games/nou/"):
-                category = "nou"
+            category = get_category_for_path(norm_name)
                 
             if category:
                 overrides = getattr(store, "mas_dtm_overrides", {})
+                if category in ("arms", "torso") and not overrides.get(category_to_config_key.get(category)):
+                    if overrides.get("body_theme"):
+                        category = "body"
+                        
                 config_key = category_to_config_key.get(category)
                 theme_path = overrides.get(config_key)
                 if theme_path:
@@ -457,22 +553,7 @@ init 999 python in dtm_core:
                 real_name = name.split(theme_suffix)[0] if theme_suffix in name else name
                 norm_name = real_name.replace("\\", "/").lower()
                 
-                category = None
-                if norm_name.startswith("mod_assets/monika/f/"):
-                    if "eyes-" in norm_name:
-                        category = "eyes"
-                    elif "mouth-" in norm_name:
-                        category = "mouth"
-                    elif "nose-" in norm_name:
-                        category = "nose"
-                elif norm_name.startswith("mod_assets/monika/b/"):
-                    category = "body"
-                elif norm_name.startswith("mod_assets/games/chess/"):
-                    category = "chess"
-                elif norm_name.startswith("mod_assets/games/pong/"):
-                    category = "pong"
-                elif norm_name.startswith("mod_assets/games/nou/"):
-                    category = "nou"
+                category = get_category_for_path(norm_name)
                     
                 if category:
                     override = get_custom_override(category, norm_name)
@@ -489,14 +570,14 @@ init 999 python in dtm_core:
 
     def predict_active_custom_assets():
         """
-        Starts predicting only the currently active custom eyes and mouth assets
+        Starts predicting only the currently active custom face assets
         to pre-populate Ren'Py's image cache safely and prevent out-of-memory.
         """
         try:
             dtm_log("predict_active_custom_assets: Starting background prediction for active themes.")
             count = 0
             overrides = getattr(store, "mas_dtm_overrides", {})
-            for cat in ("eyes", "mouth"):
+            for cat in ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop"):
                 config_key = category_to_config_key.get(cat)
                 if not config_key:
                     continue
@@ -537,10 +618,12 @@ init 999 python in dtm_core:
             if hasattr(store.mas_sprites, "_gc"):
                 # CID_FACE = 1, CID_ARMS = 2, CID_BODY = 3, CID_HAIR = 4, CID_ACS = 5
                 cids = []
-                if category in ("eyes", "mouth", "nose"):
+                if category in ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop"):
                     cids = [1] # CID_FACE
-                elif category == "body":
+                elif category in ("arms", "torso", "body"):
                     cids = [2, 3] # CID_ARMS, CID_BODY
+                elif category in ("mug", "hotchoc_mug", "promisering", "quetzal", "roses", "thermos_mug"):
+                    cids = [5] # CID_ACS
                 else:
                     cids = [1, 2, 3, 4, 5]
                 
@@ -581,6 +664,22 @@ init 999 python in dtm_core:
         predict_active_custom_assets()
         force_update_mas_visuals("eyes")
 
+    def set_eyebrows_textures(folder_path):
+        dtm_log("set_eyebrows_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("eyebrows")
+        store.mas_dtm_overrides["eyebrows_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("eyebrows")
+
+    def reset_eyebrows_textures():
+        dtm_log("reset_eyebrows_textures called")
+        clear_surface_cache_for_category("eyebrows")
+        store.mas_dtm_overrides["eyebrows_theme"] = None
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("eyebrows")
+
     def set_mouth_textures(folder_path):
         dtm_log("set_mouth_textures: folder_path = {0}".format(folder_path))
         clear_surface_cache_for_category("mouth")
@@ -602,6 +701,7 @@ init 999 python in dtm_core:
         clear_surface_cache_for_category("nose")
         store.mas_dtm_overrides["nose_theme"] = _make_portable_path(folder_path)
         store.mas_dtm_save_config()
+        predict_active_custom_assets()
         force_update_mas_visuals("nose")
 
     def reset_nose_textures():
@@ -609,7 +709,84 @@ init 999 python in dtm_core:
         clear_surface_cache_for_category("nose")
         store.mas_dtm_overrides["nose_theme"] = None
         store.mas_dtm_save_config()
+        predict_active_custom_assets()
         force_update_mas_visuals("nose")
+
+    def set_blush_textures(folder_path):
+        dtm_log("set_blush_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("blush")
+        store.mas_dtm_overrides["blush_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("blush")
+
+    def reset_blush_textures():
+        dtm_log("reset_blush_textures called")
+        clear_surface_cache_for_category("blush")
+        store.mas_dtm_overrides["blush_theme"] = None
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("blush")
+
+    def set_tears_textures(folder_path):
+        dtm_log("set_tears_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("tears")
+        store.mas_dtm_overrides["tears_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("tears")
+
+    def reset_tears_textures():
+        dtm_log("reset_tears_textures called")
+        clear_surface_cache_for_category("tears")
+        store.mas_dtm_overrides["tears_theme"] = None
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("tears")
+
+    def set_sweatdrop_textures(folder_path):
+        dtm_log("set_sweatdrop_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("sweatdrop")
+        store.mas_dtm_overrides["sweatdrop_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("sweatdrop")
+
+    def reset_sweatdrop_textures():
+        dtm_log("reset_sweatdrop_textures called")
+        clear_surface_cache_for_category("sweatdrop")
+        store.mas_dtm_overrides["sweatdrop_theme"] = None
+        store.mas_dtm_save_config()
+        predict_active_custom_assets()
+        force_update_mas_visuals("sweatdrop")
+
+    def set_arms_textures(folder_path):
+        dtm_log("set_arms_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("arms")
+        store.mas_dtm_overrides["arms_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("arms")
+
+    def reset_arms_textures():
+        dtm_log("reset_arms_textures called")
+        clear_surface_cache_for_category("arms")
+        store.mas_dtm_overrides["arms_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("arms")
+
+    def set_torso_textures(folder_path):
+        dtm_log("set_torso_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("torso")
+        store.mas_dtm_overrides["torso_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("torso")
+
+    def reset_torso_textures():
+        dtm_log("reset_torso_textures called")
+        clear_surface_cache_for_category("torso")
+        store.mas_dtm_overrides["torso_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("torso")
 
     def set_body_textures(folder_path):
         dtm_log("set_body_textures: folder_path = {0}".format(folder_path))
@@ -624,6 +801,104 @@ init 999 python in dtm_core:
         store.mas_dtm_overrides["body_theme"] = None
         store.mas_dtm_save_config()
         force_update_mas_visuals("body")
+
+    def set_mug_textures(folder_path):
+        dtm_log("set_mug_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("mug")
+        store.mas_dtm_overrides["mug_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("mug")
+
+    def reset_mug_textures():
+        dtm_log("reset_mug_textures called")
+        clear_surface_cache_for_category("mug")
+        store.mas_dtm_overrides["mug_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("mug")
+
+    def set_hotchoc_mug_textures(folder_path):
+        dtm_log("set_hotchoc_mug_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("hotchoc_mug")
+        store.mas_dtm_overrides["hotchoc_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("hotchoc_mug")
+
+    def reset_hotchoc_mug_textures():
+        dtm_log("reset_hotchoc_mug_textures called")
+        clear_surface_cache_for_category("hotchoc_mug")
+        store.mas_dtm_overrides["hotchoc_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("hotchoc_mug")
+
+    def set_promisering_textures(folder_path):
+        dtm_log("set_promisering_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("promisering")
+        store.mas_dtm_overrides["promisering_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("promisering")
+
+    def reset_promisering_textures():
+        dtm_log("reset_promisering_textures called")
+        clear_surface_cache_for_category("promisering")
+        store.mas_dtm_overrides["promisering_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("promisering")
+
+    def set_quetzal_textures(folder_path):
+        dtm_log("set_quetzal_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("quetzal")
+        store.mas_dtm_overrides["quetzal_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("quetzal")
+
+    def reset_quetzal_textures():
+        dtm_log("reset_quetzal_textures called")
+        clear_surface_cache_for_category("quetzal")
+        store.mas_dtm_overrides["quetzal_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("quetzal")
+
+    def set_roses_textures(folder_path):
+        dtm_log("set_roses_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("roses")
+        store.mas_dtm_overrides["roses_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("roses")
+
+    def reset_roses_textures():
+        dtm_log("reset_roses_textures called")
+        clear_surface_cache_for_category("roses")
+        store.mas_dtm_overrides["roses_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("roses")
+
+    def set_thermos_mug_textures(folder_path):
+        dtm_log("set_thermos_mug_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("thermos_mug")
+        store.mas_dtm_overrides["thermos_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("thermos_mug")
+
+    def reset_thermos_mug_textures():
+        dtm_log("reset_thermos_mug_textures called")
+        clear_surface_cache_for_category("thermos_mug")
+        store.mas_dtm_overrides["thermos_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("thermos_mug")
+
+    def set_calendar_textures(folder_path):
+        dtm_log("set_calendar_textures: folder_path = {0}".format(folder_path))
+        clear_surface_cache_for_category("calendar")
+        store.mas_dtm_overrides["calendar_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("calendar")
+
+    def reset_calendar_textures():
+        dtm_log("reset_calendar_textures called")
+        clear_surface_cache_for_category("calendar")
+        store.mas_dtm_overrides["calendar_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("calendar")
 
     def set_pong_textures(folder_path):
         dtm_log("set_pong_textures: folder_path = {0}".format(folder_path))

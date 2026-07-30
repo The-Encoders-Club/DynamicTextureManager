@@ -70,9 +70,22 @@ label mas_dtm_change_textures:
         import os
         categories = [
             "monika/eyes",
+            "monika/eyebrows",
             "monika/mouth",
             "monika/nose",
+            "monika/blush",
+            "monika/tears",
+            "monika/sweatdrop",
+            "monika/arms",
+            "monika/torso",
             "monika/body",
+            "accessories/mug",
+            "accessories/hotchoc_mug",
+            "accessories/promisering",
+            "accessories/quetzal",
+            "accessories/roses",
+            "accessories/thermos_mug",
+            "room/calendar",
             "games/chess",
             "games/pong",
             "games/nou"
@@ -110,29 +123,63 @@ label mas_dtm_change_textures:
             # Build items for right pane based on current view
             if dtm_current_view == "main":
                 main_items = [
+                    (_("Accessories"), "dtm_accessories"),
+                    (_("Games"), "dtm_games"),
                     (_("Monika"), "dtm_monika"),
-                    (_("Games"), "dtm_games")
+                    (_("Room"), "dtm_room")
                 ]
             elif dtm_current_view == "dtm_monika":
                 main_items = [
+                    (_("Arms"), "dtm_scan_arms"),
+                    (_("Blush"), "dtm_scan_blush"),
+                    (_("Body"), "dtm_scan_body"),
+                    (_("Eyebrows"), "dtm_scan_eyebrows"),
                     (_("Eyes"), "dtm_scan_eyes"),
                     (_("Mouth"), "dtm_scan_mouth"),
                     (_("Nose"), "dtm_scan_nose"),
-                    (_("Body"), "dtm_scan_body")
+                    (_("Sweat Drop"), "dtm_scan_sweatdrop"),
+                    (_("Tears"), "dtm_scan_tears"),
+                    (_("Torso"), "dtm_scan_torso")
+                ]
+            elif dtm_current_view == "dtm_accessories":
+                main_items = [
+                    (_("Coffee Mug"), "dtm_scan_mug"),
+                    (_("Hot Chocolate Mug"), "dtm_scan_hotchoc_mug"),
+                    (_("Promise Ring"), "dtm_scan_promisering"),
+                    (_("Quetzal Plushie"), "dtm_scan_quetzal"),
+                    (_("Roses"), "dtm_scan_roses"),
+                    (_("Thermos Mug"), "dtm_scan_thermos_mug")
+                ]
+            elif dtm_current_view == "dtm_room":
+                main_items = [
+                    (_("Calendar"), "dtm_scan_calendar")
                 ]
             elif dtm_current_view == "dtm_games":
                 main_items = [
                     (_("Chess"), "dtm_scan_chess"),
-                    (_("Pong"), "dtm_scan_pong"),
-                    (_("NOU"), "dtm_scan_nou")
+                    (_("NOU"), "dtm_scan_nou"),
+                    (_("Pong"), "dtm_scan_pong")
                 ]
             elif dtm_current_view.startswith("dtm_scan_"):
                 sub_path = dtm_current_view[9:]
                 folder_map = {
                     "eyes": "monika/eyes",
+                    "eyebrows": "monika/eyebrows",
                     "mouth": "monika/mouth",
                     "nose": "monika/nose",
+                    "blush": "monika/blush",
+                    "tears": "monika/tears",
+                    "sweatdrop": "monika/sweatdrop",
+                    "arms": "monika/arms",
+                    "torso": "monika/torso",
                     "body": "monika/body",
+                    "mug": "accessories/mug",
+                    "hotchoc_mug": "accessories/hotchoc_mug",
+                    "promisering": "accessories/promisering",
+                    "quetzal": "accessories/quetzal",
+                    "roses": "accessories/roses",
+                    "thermos_mug": "accessories/thermos_mug",
+                    "calendar": "room/calendar",
                     "chess": "games/chess",
                     "pong": "games/pong",
                     "nou": "games/nou"
@@ -198,9 +245,22 @@ label mas_dtm_change_textures:
                     import os
                     folder_map = {
                         "eyes": ("monika", "eyes"),
+                        "eyebrows": ("monika", "eyebrows"),
                         "mouth": ("monika", "mouth"),
                         "nose": ("monika", "nose"),
+                        "blush": ("monika", "blush"),
+                        "tears": ("monika", "tears"),
+                        "sweatdrop": ("monika", "sweatdrop"),
+                        "arms": ("monika", "arms"),
+                        "torso": ("monika", "torso"),
                         "body": ("monika", "body"),
+                        "mug": ("accessories", "mug"),
+                        "hotchoc_mug": ("accessories", "hotchoc_mug"),
+                        "promisering": ("accessories", "promisering"),
+                        "quetzal": ("accessories", "quetzal"),
+                        "roses": ("accessories", "roses"),
+                        "thermos_mug": ("accessories", "thermos_mug"),
+                        "calendar": ("room", "calendar"),
                         "chess": ("games", "chess"),
                         "pong": ("games", "pong"),
                         "nou": ("games", "nou")
@@ -209,9 +269,22 @@ label mas_dtm_change_textures:
                     abs_folder = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], folder_name)
                     func_map = {
                         "eyes": store.dtm_core.set_eyes_textures,
+                        "eyebrows": store.dtm_core.set_eyebrows_textures,
                         "mouth": store.dtm_core.set_mouth_textures,
                         "nose": store.dtm_core.set_nose_textures,
+                        "blush": store.dtm_core.set_blush_textures,
+                        "tears": store.dtm_core.set_tears_textures,
+                        "sweatdrop": store.dtm_core.set_sweatdrop_textures,
+                        "arms": store.dtm_core.set_arms_textures,
+                        "torso": store.dtm_core.set_torso_textures,
                         "body": store.dtm_core.set_body_textures,
+                        "mug": store.dtm_core.set_mug_textures,
+                        "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
+                        "promisering": store.dtm_core.set_promisering_textures,
+                        "quetzal": store.dtm_core.set_quetzal_textures,
+                        "roses": store.dtm_core.set_roses_textures,
+                        "thermos_mug": store.dtm_core.set_thermos_mug_textures,
+                        "calendar": store.dtm_core.set_calendar_textures,
                         "chess": store.dtm_core.set_chess_textures,
                         "pong": store.dtm_core.set_pong_textures,
                         "nou": store.dtm_core.set_nou_textures
@@ -224,9 +297,22 @@ label mas_dtm_change_textures:
                 if hasattr(store, "dtm_core"):
                     func_map = {
                         "eyes": store.dtm_core.reset_eyes_textures,
+                        "eyebrows": store.dtm_core.reset_eyebrows_textures,
                         "mouth": store.dtm_core.reset_mouth_textures,
                         "nose": store.dtm_core.reset_nose_textures,
+                        "blush": store.dtm_core.reset_blush_textures,
+                        "tears": store.dtm_core.reset_tears_textures,
+                        "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
+                        "arms": store.dtm_core.reset_arms_textures,
+                        "torso": store.dtm_core.reset_torso_textures,
                         "body": store.dtm_core.reset_body_textures,
+                        "mug": store.dtm_core.reset_mug_textures,
+                        "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
+                        "promisering": store.dtm_core.reset_promisering_textures,
+                        "quetzal": store.dtm_core.reset_quetzal_textures,
+                        "roses": store.dtm_core.reset_roses_textures,
+                        "thermos_mug": store.dtm_core.reset_thermos_mug_textures,
+                        "calendar": store.dtm_core.reset_calendar_textures,
                         "chess": store.dtm_core.reset_chess_textures,
                         "pong": store.dtm_core.reset_pong_textures,
                         "nou": store.dtm_core.reset_nou_textures
