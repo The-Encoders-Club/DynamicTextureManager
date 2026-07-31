@@ -100,6 +100,11 @@ label mas_dtm_change_textures:
         dtm_nav_stack = []
         dtm_exit = False
         dtm_action_to_run = None
+        dtm_in_selector = False
+        store.dtm_search_text = ""
+        store.dtm_show_filter = False
+        store.dtm_active_sub_category = "arms"
+        dtm_initial_overrides = {}
         dtm_prev_items, dtm_prev_cats = mas_dtm_get_dialogue_categories(pool=True)
 
         # Hook main_adj.changed callback to save scroll position on scroll events
@@ -213,123 +218,253 @@ label mas_dtm_change_textures:
                 if isinstance(_action_val, basestring) and not renpy.has_label(_action_val):
                     renpy.game.script.namemap[_action_val] = renpy.game.script.namemap["mas_dtm_change_textures"]
 
-        # Call the native MAS twopane screen directly. We pass 1 as cat_length to hide the native Go Back button on the left.
-        call screen twopane_scrollable_menu(prev_items, main_items, store.evhand.LEFT_AREA, store.evhand.LEFT_XALIGN, store.evhand.RIGHT_AREA, store.evhand.RIGHT_XALIGN, 1) nopredict
+        # Select screen call based on whether we are in the sidebar selector view
+        if dtm_in_selector:
+            python:
+                # Build list of categories for filter dropdown
+                if dtm_current_view == "dtm_monika":
+                    dtm_categories_list = [
+                        (_("Arms"), "arms"),
+                        (_("Blush"), "blush"),
+                        (_("Body"), "body"),
+                        (_("Eyebrows"), "eyebrows"),
+                        (_("Eyes"), "eyes"),
+                        (_("Mouth"), "mouth"),
+                        (_("Nose"), "nose"),
+                        (_("Sweat Drop"), "sweatdrop"),
+                        (_("Tears"), "tears"),
+                        (_("Torso"), "torso")
+                    ]
+                elif dtm_current_view == "dtm_accessories":
+                    dtm_categories_list = [
+                        (_("Coffee Mug"), "mug"),
+                        (_("Hot Chocolate Mug"), "hotchoc_mug"),
+                        (_("Promise Ring"), "promisering"),
+                        (_("Quetzal Plushie"), "quetzal"),
+                        (_("Roses"), "roses"),
+                        (_("Thermos Mug"), "thermos_mug")
+                    ]
+                else: # dtm_room
+                    dtm_categories_list = [
+                        (_("Calendar"), "calendar")
+                    ]
+                
+                # Fetch packs list for current active category
+                folder_map = {
+                    "eyes": ("monika", "eyes"),
+                    "eyebrows": ("monika", "eyebrows"),
+                    "mouth": ("monika", "mouth"),
+                    "nose": ("monika", "nose"),
+                    "blush": ("monika", "blush"),
+                    "tears": ("monika", "tears"),
+                    "sweatdrop": ("monika", "sweatdrop"),
+                    "arms": ("monika", "arms"),
+                    "torso": ("monika", "torso"),
+                    "body": ("monika", "body"),
+                    "mug": ("accessories", "mug"),
+                    "hotchoc_mug": ("accessories", "hotchoc_mug"),
+                    "promisering": ("accessories", "promisering"),
+                    "quetzal": ("accessories", "quetzal"),
+                    "roses": ("accessories", "roses"),
+                    "thermos_mug": ("accessories", "thermos_mug"),
+                    "calendar": ("room", "calendar")
+                }
+                p_sub = folder_map[store.dtm_active_sub_category]
+                dtm_packs = mas_dtm_get_texture_folders(p_sub[0] + "/" + p_sub[1])
+                
+            call screen dtm_selector_sidebar(store.dtm_active_sub_category, dtm_packs, dtm_categories_list, folder_map) nopredict
+        else:
+            # Call the native MAS twopane screen directly. We pass 1 as cat_length to hide the native Go Back button on the left.
+            call screen twopane_scrollable_menu(prev_items, main_items, store.evhand.LEFT_AREA, store.evhand.LEFT_XALIGN, store.evhand.RIGHT_AREA, store.evhand.RIGHT_XALIGN, 1) nopredict
 
         python:
             # Reset action state
             dtm_action_to_run = None
             
-            # Safe parsing of native screen return
-            if _return is False or _return is None or _return == "nevermind":
-                dtm_exit = True
-                
-            elif _return == "back":
-                if len(dtm_nav_stack) > 0:
-                    dtm_current_view = dtm_nav_stack.pop()
-                else:
+            if dtm_in_selector:
+                set_func_map = {
+                    "eyes": store.dtm_core.set_eyes_textures,
+                    "eyebrows": store.dtm_core.set_eyebrows_textures,
+                    "mouth": store.dtm_core.set_mouth_textures,
+                    "nose": store.dtm_core.set_nose_textures,
+                    "blush": store.dtm_core.set_blush_textures,
+                    "tears": store.dtm_core.set_tears_textures,
+                    "sweatdrop": store.dtm_core.set_sweatdrop_textures,
+                    "arms": store.dtm_core.set_arms_textures,
+                    "torso": store.dtm_core.set_torso_textures,
+                    "body": store.dtm_core.set_body_textures,
+                    "mug": store.dtm_core.set_mug_textures,
+                    "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
+                    "promisering": store.dtm_core.set_promisering_textures,
+                    "quetzal": store.dtm_core.set_quetzal_textures,
+                    "roses": store.dtm_core.set_roses_textures,
+                    "thermos_mug": store.dtm_core.set_thermos_mug_textures,
+                    "calendar": store.dtm_core.set_calendar_textures
+                }
+                reset_func_map = {
+                    "eyes": store.dtm_core.reset_eyes_textures,
+                    "eyebrows": store.dtm_core.reset_eyebrows_textures,
+                    "mouth": store.dtm_core.reset_mouth_textures,
+                    "nose": store.dtm_core.reset_nose_textures,
+                    "blush": store.dtm_core.reset_blush_textures,
+                    "tears": store.dtm_core.reset_tears_textures,
+                    "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
+                    "arms": store.dtm_core.reset_arms_textures,
+                    "torso": store.dtm_core.reset_torso_textures,
+                    "body": store.dtm_core.reset_body_textures,
+                    "mug": store.dtm_core.reset_mug_textures,
+                    "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
+                    "promisering": store.dtm_core.reset_promisering_textures,
+                    "quetzal": store.dtm_core.reset_quetzal_textures,
+                    "roses": store.dtm_core.reset_roses_textures,
+                    "thermos_mug": store.dtm_core.reset_thermos_mug_textures,
+                    "calendar": store.dtm_core.reset_calendar_textures
+                }
+                if _return == "confirm":
+                    # Exit selector to main menu
+                    dtm_in_selector = False
                     dtm_current_view = "main"
-                store._dtm_last_scroll_value = 0
+                elif _return == "cancel":
+                    # Exit selector to main menu (does not revert)
+                    dtm_in_selector = False
+                    dtm_current_view = "main"
+                elif _return == "restore" or _return == "preview_restore":
+                    # Reset current subcategory to default immediately
+                    reset_func_map[store.dtm_active_sub_category]()
+                elif isinstance(_return, basestring) and _return.startswith("preview:"):
+                    # Apply and save pack selection immediately
+                    pack_name = _return.split(":", 1)[1]
+                    p_sub = folder_map[store.dtm_active_sub_category]
+                    abs_folder = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], pack_name)
+                    set_func_map[store.dtm_active_sub_category](abs_folder)
+                elif _return == "dtm_change_category":
+                    pass
+            else:
+                # Safe parsing of native screen return
+                if _return is False or _return is None or _return == "nevermind":
+                    dtm_exit = True
                     
-            elif _return in dtm_prev_cats:
-                # Clicked a category on the left panel: navigate into that category within DTM
-                dtm_nav_stack.append(dtm_current_view)
-                dtm_current_view = "category:" + _return[0] if isinstance(_return, list) else "category:" + _return
-                store._dtm_last_scroll_value = 0
-                
-            elif isinstance(_return, basestring) and _return.startswith("apply:"):
-                parts = _return.split(":")
-                sub_path = parts[1]
-                folder_name = parts[2]
-                if hasattr(store, "dtm_core"):
-                    import os
-                    folder_map = {
-                        "eyes": ("monika", "eyes"),
-                        "eyebrows": ("monika", "eyebrows"),
-                        "mouth": ("monika", "mouth"),
-                        "nose": ("monika", "nose"),
-                        "blush": ("monika", "blush"),
-                        "tears": ("monika", "tears"),
-                        "sweatdrop": ("monika", "sweatdrop"),
-                        "arms": ("monika", "arms"),
-                        "torso": ("monika", "torso"),
-                        "body": ("monika", "body"),
-                        "mug": ("accessories", "mug"),
-                        "hotchoc_mug": ("accessories", "hotchoc_mug"),
-                        "promisering": ("accessories", "promisering"),
-                        "quetzal": ("accessories", "quetzal"),
-                        "roses": ("accessories", "roses"),
-                        "thermos_mug": ("accessories", "thermos_mug"),
-                        "calendar": ("room", "calendar"),
-                        "chess": ("games", "chess"),
-                        "pong": ("games", "pong"),
-                        "nou": ("games", "nou")
-                    }
-                    p_sub = folder_map[sub_path]
-                    abs_folder = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], folder_name)
-                    func_map = {
-                        "eyes": store.dtm_core.set_eyes_textures,
-                        "eyebrows": store.dtm_core.set_eyebrows_textures,
-                        "mouth": store.dtm_core.set_mouth_textures,
-                        "nose": store.dtm_core.set_nose_textures,
-                        "blush": store.dtm_core.set_blush_textures,
-                        "tears": store.dtm_core.set_tears_textures,
-                        "sweatdrop": store.dtm_core.set_sweatdrop_textures,
-                        "arms": store.dtm_core.set_arms_textures,
-                        "torso": store.dtm_core.set_torso_textures,
-                        "body": store.dtm_core.set_body_textures,
-                        "mug": store.dtm_core.set_mug_textures,
-                        "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
-                        "promisering": store.dtm_core.set_promisering_textures,
-                        "quetzal": store.dtm_core.set_quetzal_textures,
-                        "roses": store.dtm_core.set_roses_textures,
-                        "thermos_mug": store.dtm_core.set_thermos_mug_textures,
-                        "calendar": store.dtm_core.set_calendar_textures,
-                        "chess": store.dtm_core.set_chess_textures,
-                        "pong": store.dtm_core.set_pong_textures,
-                        "nou": store.dtm_core.set_nou_textures
-                    }
-                    func_map[sub_path](abs_folder)
-                    renpy.notify(_("Texture changed successfully"))
+                elif _return == "back":
+                    if len(dtm_nav_stack) > 0:
+                        dtm_current_view = dtm_nav_stack.pop()
+                    else:
+                        dtm_current_view = "main"
+                    store._dtm_last_scroll_value = 0
+                        
+                elif _return in dtm_prev_cats:
+                    # Clicked a category on the left panel: navigate into that category within DTM
+                    dtm_nav_stack.append(dtm_current_view)
+                    dtm_current_view = "category:" + _return[0] if isinstance(_return, list) else "category:" + _return
+                    store._dtm_last_scroll_value = 0
                     
-            elif isinstance(_return, basestring) and _return.startswith("restore:"):
-                sub_path = _return.split(":")[1]
-                if hasattr(store, "dtm_core"):
-                    func_map = {
-                        "eyes": store.dtm_core.reset_eyes_textures,
-                        "eyebrows": store.dtm_core.reset_eyebrows_textures,
-                        "mouth": store.dtm_core.reset_mouth_textures,
-                        "nose": store.dtm_core.reset_nose_textures,
-                        "blush": store.dtm_core.reset_blush_textures,
-                        "tears": store.dtm_core.reset_tears_textures,
-                        "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
-                        "arms": store.dtm_core.reset_arms_textures,
-                        "torso": store.dtm_core.reset_torso_textures,
-                        "body": store.dtm_core.reset_body_textures,
-                        "mug": store.dtm_core.reset_mug_textures,
-                        "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
-                        "promisering": store.dtm_core.reset_promisering_textures,
-                        "quetzal": store.dtm_core.reset_quetzal_textures,
-                        "roses": store.dtm_core.reset_roses_textures,
-                        "thermos_mug": store.dtm_core.reset_thermos_mug_textures,
-                        "calendar": store.dtm_core.reset_calendar_textures,
-                        "chess": store.dtm_core.reset_chess_textures,
-                        "pong": store.dtm_core.reset_pong_textures,
-                        "nou": store.dtm_core.reset_nou_textures
-                    }
-                    func_map[sub_path]()
-                    renpy.notify(_("Textures restored"))
+                elif isinstance(_return, basestring) and _return.startswith("apply:"):
+                    parts = _return.split(":")
+                    sub_path = parts[1]
+                    folder_name = parts[2]
+                    if hasattr(store, "dtm_core"):
+                        import os
+                        folder_map = {
+                            "eyes": ("monika", "eyes"),
+                            "eyebrows": ("monika", "eyebrows"),
+                            "mouth": ("monika", "mouth"),
+                            "nose": ("monika", "nose"),
+                            "blush": ("monika", "blush"),
+                            "tears": ("monika", "tears"),
+                            "sweatdrop": ("monika", "sweatdrop"),
+                            "arms": ("monika", "arms"),
+                            "torso": ("monika", "torso"),
+                            "body": ("monika", "body"),
+                            "mug": ("accessories", "mug"),
+                            "hotchoc_mug": ("accessories", "hotchoc_mug"),
+                            "promisering": ("accessories", "promisering"),
+                            "quetzal": ("accessories", "quetzal"),
+                            "roses": ("accessories", "roses"),
+                            "thermos_mug": ("accessories", "thermos_mug"),
+                            "calendar": ("room", "calendar"),
+                            "chess": ("games", "chess"),
+                            "pong": ("games", "pong"),
+                            "nou": ("games", "nou")
+                        }
+                        p_sub = folder_map[sub_path]
+                        abs_folder = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], folder_name)
+                        func_map = {
+                            "eyes": store.dtm_core.set_eyes_textures,
+                            "eyebrows": store.dtm_core.set_eyebrows_textures,
+                            "mouth": store.dtm_core.set_mouth_textures,
+                            "nose": store.dtm_core.set_nose_textures,
+                            "blush": store.dtm_core.set_blush_textures,
+                            "tears": store.dtm_core.set_tears_textures,
+                            "sweatdrop": store.dtm_core.set_sweatdrop_textures,
+                            "arms": store.dtm_core.set_arms_textures,
+                            "torso": store.dtm_core.set_torso_textures,
+                            "body": store.dtm_core.set_body_textures,
+                            "mug": store.dtm_core.set_mug_textures,
+                            "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
+                            "promisering": store.dtm_core.set_promisering_textures,
+                            "quetzal": store.dtm_core.set_quetzal_textures,
+                            "roses": store.dtm_core.set_roses_textures,
+                            "thermos_mug": store.dtm_core.set_thermos_mug_textures,
+                            "calendar": store.dtm_core.set_calendar_textures,
+                            "chess": store.dtm_core.set_chess_textures,
+                            "pong": store.dtm_core.set_pong_textures,
+                            "nou": store.dtm_core.set_nou_textures
+                        }
+                        func_map[sub_path](abs_folder)
+                        renpy.notify(_("Texture changed successfully"))
+                        
+                elif isinstance(_return, basestring) and _return.startswith("restore:"):
+                    sub_path = _return.split(":")[1]
+                    if hasattr(store, "dtm_core"):
+                        func_map = {
+                            "eyes": store.dtm_core.reset_eyes_textures,
+                            "eyebrows": store.dtm_core.reset_eyebrows_textures,
+                            "mouth": store.dtm_core.reset_mouth_textures,
+                            "nose": store.dtm_core.reset_nose_textures,
+                            "blush": store.dtm_core.reset_blush_textures,
+                            "tears": store.dtm_core.reset_tears_textures,
+                            "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
+                            "arms": store.dtm_core.reset_arms_textures,
+                            "torso": store.dtm_core.reset_torso_textures,
+                            "body": store.dtm_core.reset_body_textures,
+                            "mug": store.dtm_core.reset_mug_textures,
+                            "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
+                            "promisering": store.dtm_core.reset_promisering_textures,
+                            "quetzal": store.dtm_core.reset_quetzal_textures,
+                            "roses": store.dtm_core.reset_roses_textures,
+                            "thermos_mug": store.dtm_core.reset_thermos_mug_textures,
+                            "calendar": store.dtm_core.reset_calendar_textures,
+                            "chess": store.dtm_core.reset_chess_textures,
+                            "pong": store.dtm_core.reset_pong_textures,
+                            "nou": store.dtm_core.reset_nou_textures
+                        }
+                        func_map[sub_path]()
+                        renpy.notify(_("Textures restored"))
+                        
+                elif isinstance(_return, basestring) and _return.startswith("dtm_"):
+                    # DTM sub-view navigation
+                    dtm_nav_stack.append(dtm_current_view)
+                    dtm_current_view = _return
+                    store._dtm_last_scroll_value = 0
                     
-            elif isinstance(_return, basestring) and _return.startswith("dtm_"):
-                # DTM sub-view navigation
-                dtm_nav_stack.append(dtm_current_view)
-                dtm_current_view = _return
-                store._dtm_last_scroll_value = 0
-                
-            elif isinstance(_return, basestring) and (renpy.has_label(_return) or _return.startswith("event:")):
-                # Native dialogue selected from search or list: Exit DTM and run it
-                dtm_exit = True
-                dtm_action_to_run = _return.split(":")[1] if _return.startswith("event:") else _return
+                    # If entering a sidebar category, set up the selector state
+                    if dtm_current_view in ("dtm_monika", "dtm_accessories", "dtm_room"):
+                        dtm_in_selector = True
+                        store.dtm_search_text = ""
+                        store.dtm_show_filter = False
+                        if dtm_current_view == "dtm_monika":
+                            store.dtm_active_sub_category = "arms"
+                        elif dtm_current_view == "dtm_accessories":
+                            store.dtm_active_sub_category = "mug"
+                        elif dtm_current_view == "dtm_room":
+                            store.dtm_active_sub_category = "calendar"
+                            
+                        # Save initial overrides for cancel/revert
+                        dtm_initial_overrides = {k: v for k, v in store.mas_dtm_overrides.items()}
+                    
+                elif isinstance(_return, basestring) and (renpy.has_label(_return) or _return.startswith("event:")):
+                    # Native dialogue selected from search or list: Exit DTM and run it
+                    dtm_exit = True
+                    dtm_action_to_run = _return.split(":")[1] if _return.startswith("event:") else _return
 
             # Restore the scroll position for the next iteration of the screen loop
             if not dtm_exit:
@@ -357,3 +492,253 @@ label mas_dtm_change_textures:
         jump prompt_menu
     else:
         return
+
+init python:
+    def dtm_get_default_thumb():
+        import os
+        for f in ("mod_assets/thumbs/remove.png", "gui/window_icon.png"):
+            if os.path.exists(os.path.join(config.gamedir, f)):
+                return f
+        return "gui/window_icon.png"
+
+    def dtm_get_thumbnail(category, sub_category, pack):
+        import os
+        folder_map = {
+            "eyes": ("monika", "eyes"),
+            "eyebrows": ("monika", "eyebrows"),
+            "mouth": ("monika", "mouth"),
+            "nose": ("monika", "nose"),
+            "blush": ("monika", "blush"),
+            "tears": ("monika", "tears"),
+            "sweatdrop": ("monika", "sweatdrop"),
+            "arms": ("monika", "arms"),
+            "torso": ("monika", "torso"),
+            "body": ("monika", "body"),
+            "mug": ("accessories", "mug"),
+            "hotchoc_mug": ("accessories", "hotchoc_mug"),
+            "promisering": ("accessories", "promisering"),
+            "quetzal": ("accessories", "quetzal"),
+            "roses": ("accessories", "roses"),
+            "thermos_mug": ("accessories", "thermos_mug"),
+            "calendar": ("room", "calendar")
+        }
+        
+        default_thumb = dtm_get_default_thumb()
+        p_sub = folder_map.get(sub_category)
+        if not p_sub:
+            return default_thumb
+            
+        pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], pack)
+        for f in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg"):
+            if os.path.exists(os.path.join(pack_dir, f)):
+                return pack_dir.replace("\\", "/") + "/" + f
+        return default_thumb
+
+transform dtm_thumb_resize:
+    size (180, 180)
+
+screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_map):
+    zorder 50
+
+    # Categorías / Filtro desplegable - Coordenadas y comportamiento exacto a zz_selector.rpy
+    if store.dtm_show_filter:
+        frame:
+            area (750, 45, 300, 500)
+            background None
+
+            viewport id "filter_scroll":
+                mousewheel True
+                has vbox
+                spacing 5
+                for cat_label, cat_id in categories_list:
+                    textbutton cat_label:
+                        style "hkb_button"
+                        xysize (280, 40)
+                        xalign 0.5
+                        selected (store.dtm_active_sub_category == cat_id)
+                        action [
+                            SetField(store, "dtm_active_sub_category", cat_id),
+                            SetField(store, "dtm_show_filter", False),
+                            Return("dtm_change_category")
+                        ]
+            vbar value YScrollValue("filter_scroll"):
+                style "mas_selector_sidebar_vbar"
+                unscrollable "hide"
+                xoffset -15
+
+    # Botón Filtro (Categoría) - Réplica exacta de area (960, 3, 50, 40)
+    frame:
+        area (960, 3, 50, 40)
+        background None
+        button:
+            if store.dtm_show_filter:
+                style "filter_dropdown_down"
+            else:
+                style "filter_dropdown_up"
+            action ToggleField(store, "dtm_show_filter")
+
+    # Buscador
+    frame:
+        xpos 1075
+        ypos 5
+        xsize 200
+        ysize 40
+        background Solid("#ffaa99aa")
+
+        viewport:
+            draggable False
+            xsize 195
+            ysize 38
+            input:
+                value VariableInputValue("dtm_search_text")
+                style_prefix "input"
+                length 50
+                xalign 0.0
+                layout "nobreak"
+
+        if not store.dtm_search_text:
+            text "Buscar...":
+                xalign 0.05
+                yalign 0.5
+                color "#EEEEEEB2"
+
+    # Lista de packs (Frame exclusivo para la lista)
+    frame:
+        area (1075, 50, 200, 480)
+        background Frame(store.mas_ui.sel_sb_frame, left=6, top=6, tile=True)
+
+        viewport id "sidebar_scroll":
+            ysize 460
+            mousewheel True
+            arrowkeys True
+
+            vbox:
+                xsize 200
+                spacing 10
+                null height 1
+
+                # Botón Original
+                $ is_original_active = False
+                python:
+                    current_active = store.mas_dtm_overrides.get(store.dtm_core.category_to_config_key.get(store.dtm_active_sub_category))
+                    if not current_active:
+                        is_original_active = True
+                        
+                button:
+                    style "empty"
+                    xsize 180
+                    ysize 218
+                    xalign 0.5
+                    action Return("preview_restore")
+                    vbox:
+                        xsize 180
+                        spacing 0
+                        
+                        frame:
+                            xsize 180
+                            ysize 38
+                            background Frame(
+                                mas_getTimeFile(
+                                    "mod_assets/frames/selector_top_frame_selected.png" 
+                                    if is_original_active else 
+                                    "mod_assets/frames/selector_top_frame.png"
+                                ),
+                                left=4, top=4
+                            )
+                            text "Original":
+                                xalign 0.5
+                                yalign 0.5
+                                bold False
+                                outlines []
+                                color ("#ffffff" if is_original_active else "#000000")
+                                
+                        frame:
+                            xsize 180
+                            ysize 180
+                            background None
+                            padding (0, 0)
+                            margin (0, 0)
+                            add dtm_get_default_thumb() at dtm_thumb_resize xalign 0.5 yalign 0.5
+                            add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
+
+                # Lista de packs filtrados
+                for pack in packs_list:
+                    if not store.dtm_search_text or store.dtm_search_text.lower() in pack.lower():
+                        $ is_selected = False
+                        python:
+                            p_sub = folder_map[store.dtm_active_sub_category]
+                            current_active = store.mas_dtm_overrides.get(store.dtm_core.category_to_config_key.get(store.dtm_active_sub_category))
+                            if current_active:
+                                import os
+                                act_name = os.path.basename(current_active.rstrip("/\\")).lower()
+                                if act_name == pack.lower():
+                                    is_selected = True
+                                    
+                        button:
+                            style "empty"
+                            xsize 180
+                            ysize 218
+                            xalign 0.5
+                            action Return("preview:" + pack)
+                            vbox:
+                                xsize 180
+                                spacing 0
+                                
+                                frame:
+                                    xsize 180
+                                    ysize 38
+                                    background Frame(
+                                        mas_getTimeFile(
+                                            "mod_assets/frames/selector_top_frame_selected.png" 
+                                            if is_selected else 
+                                            "mod_assets/frames/selector_top_frame.png"
+                                        ),
+                                        left=4, top=4
+                                    )
+                                    text pack:
+                                        xalign 0.5
+                                        yalign 0.5
+                                        bold False
+                                        outlines []
+                                        color ("#ffffff" if is_selected else "#000000")
+                                        
+                                frame:
+                                    xsize 180
+                                    ysize 180
+                                    background None
+                                    padding (0, 0)
+                                    margin (0, 0)
+                                    add dtm_get_thumbnail(store.dtm_active_sub_category, store.dtm_active_sub_category, pack) at dtm_thumb_resize xalign 0.5 yalign 0.5
+                                    add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
+
+                null height 1
+
+        vbar value YScrollValue("sidebar_scroll"):
+            style "mas_selector_sidebar_vbar"
+            unscrollable "hide"
+            xoffset -25
+
+    # Botones de control inferiores - Fuera del frame rosa, alineados abajo
+    vbox:
+        xpos 1075
+        ypos 540
+        xsize 200
+        spacing 5
+
+        textbutton _("Confirmar"):
+            style "hkb_button"
+            xysize (200, 35)
+            xalign 0.5
+            action Return("confirm")
+
+        textbutton _("Restaurar"):
+            style "hkb_button"
+            xysize (200, 35)
+            xalign 0.5
+            action Return("restore")
+
+        textbutton _("Cancelar"):
+            style "hkb_button"
+            xysize (200, 35)
+            xalign 0.5
+            action Return("cancel")

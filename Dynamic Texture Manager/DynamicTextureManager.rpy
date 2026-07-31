@@ -942,6 +942,26 @@ init 999 python in dtm_core:
         store.mas_dtm_save_config()
         force_update_mas_visuals("nou")
 
+    def apply_preview_texture(category, folder_path):
+        dtm_log("apply_preview_texture: category={0}, folder_path={1}".format(category, folder_path))
+        clear_surface_cache_for_category(category)
+        config_key = category_to_config_key.get(category)
+        store.mas_dtm_overrides[config_key] = _make_portable_path(folder_path) if folder_path else None
+        force_update_mas_visuals(category)
+
+    def restore_preview_textures(initial_overrides):
+        dtm_log("restore_preview_textures called")
+        for config_key, path in initial_overrides.items():
+            category = None
+            for cat, key in category_to_config_key.items():
+                if key == config_key:
+                    category = cat
+                    break
+            if category:
+                clear_surface_cache_for_category(category)
+                store.mas_dtm_overrides[config_key] = path
+                force_update_mas_visuals(category)
+
 
 init 1000 python:
     if hasattr(store, "dtm_core") and store.dtm_core:
