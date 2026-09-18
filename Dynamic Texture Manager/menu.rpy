@@ -104,6 +104,7 @@ label mas_dtm_change_textures:
         store.dtm_search_text = ""
         store.dtm_show_filter = False
         store.dtm_active_sub_category = "arms"
+        store.dtm_sidebar_adj = ui.adjustment()
         dtm_initial_overrides = {}
         dtm_prev_items, dtm_prev_cats = mas_dtm_get_dialogue_categories(pool=True)
 
@@ -244,6 +245,12 @@ label mas_dtm_change_textures:
                         (_("Roses"), "roses"),
                         (_("Thermos Mug"), "thermos_mug")
                     ]
+                elif dtm_current_view == "dtm_games":
+                    dtm_categories_list = [
+                        (_("Chess"), "chess"),
+                        (_("NOU"), "nou"),
+                        (_("Pong"), "pong")
+                    ]
                 else: # dtm_room
                     dtm_categories_list = [
                         (_("Calendar"), "calendar")
@@ -267,7 +274,10 @@ label mas_dtm_change_textures:
                     "quetzal": ("accessories", "quetzal"),
                     "roses": ("accessories", "roses"),
                     "thermos_mug": ("accessories", "thermos_mug"),
-                    "calendar": ("room", "calendar")
+                    "calendar": ("room", "calendar"),
+                    "chess": ("games", "chess"),
+                    "nou": ("games", "nou"),
+                    "pong": ("games", "pong")
                 }
                 p_sub = folder_map[store.dtm_active_sub_category]
                 dtm_packs = mas_dtm_get_texture_folders(p_sub[0] + "/" + p_sub[1])
@@ -299,7 +309,10 @@ label mas_dtm_change_textures:
                     "quetzal": store.dtm_core.set_quetzal_textures,
                     "roses": store.dtm_core.set_roses_textures,
                     "thermos_mug": store.dtm_core.set_thermos_mug_textures,
-                    "calendar": store.dtm_core.set_calendar_textures
+                    "calendar": store.dtm_core.set_calendar_textures,
+                    "chess": store.dtm_core.set_chess_textures,
+                    "nou": store.dtm_core.set_nou_textures,
+                    "pong": store.dtm_core.set_pong_textures
                 }
                 reset_func_map = {
                     "eyes": store.dtm_core.reset_eyes_textures,
@@ -318,16 +331,24 @@ label mas_dtm_change_textures:
                     "quetzal": store.dtm_core.reset_quetzal_textures,
                     "roses": store.dtm_core.reset_roses_textures,
                     "thermos_mug": store.dtm_core.reset_thermos_mug_textures,
-                    "calendar": store.dtm_core.reset_calendar_textures
+                    "calendar": store.dtm_core.reset_calendar_textures,
+                    "chess": store.dtm_core.reset_chess_textures,
+                    "nou": store.dtm_core.reset_nou_textures,
+                    "pong": store.dtm_core.reset_pong_textures
                 }
                 if _return == "confirm":
                     # Exit selector to main menu
                     dtm_in_selector = False
                     dtm_current_view = "main"
+                    dtm_nav_stack = []
                 elif _return == "cancel":
-                    # Exit selector to main menu (does not revert)
+                    # Revert to initial overrides when selector was opened
+                    if hasattr(store.dtm_core, "restore_preview_textures"):
+                        store.dtm_core.restore_preview_textures(dtm_initial_overrides)
+                        store.mas_dtm_save_config()
                     dtm_in_selector = False
                     dtm_current_view = "main"
+                    dtm_nav_stack = []
                 elif _return == "restore" or _return == "preview_restore":
                     # Reset current subcategory to default immediately
                     reset_func_map[store.dtm_active_sub_category]()
@@ -447,16 +468,20 @@ label mas_dtm_change_textures:
                     store._dtm_last_scroll_value = 0
                     
                     # If entering a sidebar category, set up the selector state
-                    if dtm_current_view in ("dtm_monika", "dtm_accessories", "dtm_room"):
+                    if dtm_current_view in ("dtm_monika", "dtm_accessories", "dtm_room", "dtm_games"):
                         dtm_in_selector = True
                         store.dtm_search_text = ""
                         store.dtm_show_filter = False
+                        if hasattr(store, "dtm_sidebar_adj") and store.dtm_sidebar_adj:
+                            store.dtm_sidebar_adj.change(0)
                         if dtm_current_view == "dtm_monika":
                             store.dtm_active_sub_category = "arms"
                         elif dtm_current_view == "dtm_accessories":
                             store.dtm_active_sub_category = "mug"
                         elif dtm_current_view == "dtm_room":
                             store.dtm_active_sub_category = "calendar"
+                        elif dtm_current_view == "dtm_games":
+                            store.dtm_active_sub_category = "chess"
                             
                         # Save initial overrides for cancel/revert
                         dtm_initial_overrides = {k: v for k, v in store.mas_dtm_overrides.items()}
@@ -494,6 +519,87 @@ label mas_dtm_change_textures:
         return
 
 init python:
+    store.dtm_sidebar_adj = ui.adjustment()
+
+    def dtm_apply_preview(sub_category, pack_name):
+        import os
+        folder_map = {
+            "eyes": ("monika", "eyes"),
+            "eyebrows": ("monika", "eyebrows"),
+            "mouth": ("monika", "mouth"),
+            "nose": ("monika", "nose"),
+            "blush": ("monika", "blush"),
+            "tears": ("monika", "tears"),
+            "sweatdrop": ("monika", "sweatdrop"),
+            "arms": ("monika", "arms"),
+            "torso": ("monika", "torso"),
+            "body": ("monika", "body"),
+            "mug": ("accessories", "mug"),
+            "hotchoc_mug": ("accessories", "hotchoc_mug"),
+            "promisering": ("accessories", "promisering"),
+            "quetzal": ("accessories", "quetzal"),
+            "roses": ("accessories", "roses"),
+            "thermos_mug": ("accessories", "thermos_mug"),
+            "calendar": ("room", "calendar"),
+            "chess": ("games", "chess"),
+            "nou": ("games", "nou"),
+            "pong": ("games", "pong")
+        }
+        set_func_map = {
+            "eyes": store.dtm_core.set_eyes_textures,
+            "eyebrows": store.dtm_core.set_eyebrows_textures,
+            "mouth": store.dtm_core.set_mouth_textures,
+            "nose": store.dtm_core.set_nose_textures,
+            "blush": store.dtm_core.set_blush_textures,
+            "tears": store.dtm_core.set_tears_textures,
+            "sweatdrop": store.dtm_core.set_sweatdrop_textures,
+            "arms": store.dtm_core.set_arms_textures,
+            "torso": store.dtm_core.set_torso_textures,
+            "body": store.dtm_core.set_body_textures,
+            "mug": store.dtm_core.set_mug_textures,
+            "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
+            "promisering": store.dtm_core.set_promisering_textures,
+            "quetzal": store.dtm_core.set_quetzal_textures,
+            "roses": store.dtm_core.set_roses_textures,
+            "thermos_mug": store.dtm_core.set_thermos_mug_textures,
+            "calendar": store.dtm_core.set_calendar_textures,
+            "chess": store.dtm_core.set_chess_textures,
+            "nou": store.dtm_core.set_nou_textures,
+            "pong": store.dtm_core.set_pong_textures
+        }
+        if sub_category in folder_map and sub_category in set_func_map:
+            p_sub = folder_map[sub_category]
+            abs_folder = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], pack_name)
+            set_func_map[sub_category](abs_folder)
+            renpy.restart_interaction()
+
+    def dtm_restore_preview(sub_category):
+        reset_func_map = {
+            "eyes": store.dtm_core.reset_eyes_textures,
+            "eyebrows": store.dtm_core.reset_eyebrows_textures,
+            "mouth": store.dtm_core.reset_mouth_textures,
+            "nose": store.dtm_core.reset_nose_textures,
+            "blush": store.dtm_core.reset_blush_textures,
+            "tears": store.dtm_core.reset_tears_textures,
+            "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
+            "arms": store.dtm_core.reset_arms_textures,
+            "torso": store.dtm_core.reset_torso_textures,
+            "body": store.dtm_core.reset_body_textures,
+            "mug": store.dtm_core.reset_mug_textures,
+            "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
+            "promisering": store.dtm_core.reset_promisering_textures,
+            "quetzal": store.dtm_core.reset_quetzal_textures,
+            "roses": store.dtm_core.reset_roses_textures,
+            "thermos_mug": store.dtm_core.reset_thermos_mug_textures,
+            "calendar": store.dtm_core.reset_calendar_textures,
+            "chess": store.dtm_core.reset_chess_textures,
+            "nou": store.dtm_core.reset_nou_textures,
+            "pong": store.dtm_core.reset_pong_textures
+        }
+        if sub_category in reset_func_map:
+            reset_func_map[sub_category]()
+            renpy.restart_interaction()
+
     def dtm_get_default_thumb():
         import os
         for f in ("mod_assets/thumbs/remove.png", "gui/window_icon.png"):
@@ -520,7 +626,10 @@ init python:
             "quetzal": ("accessories", "quetzal"),
             "roses": ("accessories", "roses"),
             "thermos_mug": ("accessories", "thermos_mug"),
-            "calendar": ("room", "calendar")
+            "calendar": ("room", "calendar"),
+            "chess": ("games", "chess"),
+            "nou": ("games", "nou"),
+            "pong": ("games", "pong")
         }
         
         default_thumb = dtm_get_default_thumb()
@@ -529,10 +638,103 @@ init python:
             return default_thumb
             
         pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], pack)
-        for f in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg"):
-            if os.path.exists(os.path.join(pack_dir, f)):
-                return pack_dir.replace("\\", "/") + "/" + f
+        if os.path.isdir(pack_dir):
+            try:
+                for f in os.listdir(pack_dir):
+                    f_lower = f.lower()
+                    if f_lower in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
+                        return (os.path.join(pack_dir, f)).replace("\\", "/")
+                # For games, check specific preview candidate
+                if sub_category == "chess":
+                    candidate = os.path.join(pack_dir, "chess_board.png")
+                    if os.path.exists(candidate):
+                        return candidate.replace("\\", "/")
+                elif sub_category == "pong":
+                    candidate = os.path.join(pack_dir, "pong_field.png")
+                    if os.path.exists(candidate):
+                        return candidate.replace("\\", "/")
+                elif sub_category == "nou":
+                    for cand_name in ("v1.png", "a1.png", "r1.png", "c1.png"):
+                        for cand in (
+                            os.path.join(pack_dir, "cards", cand_name),
+                            os.path.join(pack_dir, cand_name)
+                        ):
+                            if os.path.exists(cand):
+                                return cand.replace("\\", "/")
+            except:
+                pass
         return default_thumb
+
+    def dtm_get_image_size(filepath):
+        import struct
+        import os
+        if not filepath:
+            return (180, 180)
+        if not os.path.isabs(filepath):
+            full_path = os.path.join(config.gamedir, filepath)
+            if not os.path.exists(full_path):
+                full_path = os.path.join(store.DTM_BASE_PARENT, filepath)
+        else:
+            full_path = filepath
+            
+        if not os.path.exists(full_path):
+            return (180, 180)
+            
+        try:
+            with open(full_path, "rb") as f:
+                head = f.read(32)
+                if head.startswith(b"\x89PNG\r\n\x1a\n"):
+                    w, h = struct.unpack(">II", head[16:24])
+                    return (w, h)
+                elif head.startswith((b"GIF87a", b"GIF89a")):
+                    w, h = struct.unpack("<HH", head[6:10])
+                    return (w, h)
+                elif head.startswith(b"\xff\xd8"):
+                    f.seek(2)
+                    b = f.read(1)
+                    while b and ord(b) != 0xda:
+                        while ord(b) != 0xff:
+                            b = f.read(1)
+                        while ord(b) == 0xff:
+                            b = f.read(1)
+                        if 0xc0 <= ord(b) <= 0xc3:
+                            f.read(3)
+                            h, w = struct.unpack(">HH", f.read(4))
+                            return (w, h)
+                        else:
+                            chunk_len = struct.unpack(">H", f.read(2))[0]
+                            f.seek(chunk_len - 2, 1)
+                        b = f.read(1)
+        except Exception:
+            pass
+            
+        try:
+            return renpy.image_size(filepath)
+        except Exception:
+            return (180, 180)
+
+    def dtm_get_thumbnail_displayable(category, sub_category, pack):
+        if not pack:
+            thumb_path = dtm_get_default_thumb()
+        else:
+            thumb_path = dtm_get_thumbnail(category, sub_category, pack)
+            
+        w, h = dtm_get_image_size(thumb_path)
+        if w <= 0 or h <= 0 or w == h:
+            return Transform(thumb_path, size=(180, 180))
+        else:
+            max_dim = 170.0
+            scale = min(max_dim / w, max_dim / h)
+            fit_w = int(round(w * scale))
+            fit_h = int(round(h * scale))
+            return Transform(thumb_path, size=(fit_w, fit_h))
+
+    def dtm_format_pack_name(name, max_len=15):
+        if not name:
+            return ""
+        if len(name) > max_len:
+            return name[:max_len - 3].rstrip(" -_") + "..."
+        return name
 
 transform dtm_thumb_resize:
     size (180, 180)
@@ -543,6 +745,8 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
 
     $ h_color = getattr(store.mas_ui, "light_button_text_hover_color", "#ffffff")
     $ i_color = getattr(store.mas_globals, "button_text_idle_color", "#000000")
+    $ is_night = store.mas_isNightNow() if hasattr(store, "mas_isNightNow") else False
+    $ thumb_bg = "#262626e6" if is_night else "#e8e8e8cc"
 
     # Categorías / Filtro desplegable - Coordenadas y comportamiento exacto a zz_selector.rpy
     if store.dtm_show_filter:
@@ -565,6 +769,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                         action [
                             SetField(store, "dtm_active_sub_category", cat_id),
                             SetField(store, "dtm_show_filter", False),
+                            Function(store.dtm_sidebar_adj.change, 0),
                             Return("dtm_change_category")
                         ]
             vbar value YScrollValue("filter_scroll"):
@@ -622,6 +827,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
         background Frame(store.mas_ui.sel_sb_frame, left=6, top=6, tile=True)
 
         viewport id "sidebar_scroll":
+            yadjustment store.dtm_sidebar_adj
             ysize 460
             mousewheel True
             arrowkeys True
@@ -644,20 +850,20 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                 button:
                     style "empty"
                     xsize 180
-                    yminimum 218
+                    ysize 218
                     xalign 0.5
                     hover_sound gui.hover_sound
                     activate_sound gui.activate_sound
                     hovered SetScreenVariable("hovered_item", "___original___")
                     unhovered SetScreenVariable("hovered_item", None)
-                    action Return("preview_restore")
+                    action Function(dtm_restore_preview, store.dtm_active_sub_category)
                     vbox:
                         xsize 180
                         spacing 0
                         
                         frame:
                             xsize 180
-                            yminimum 38
+                            ysize 38
                             background Frame(
                                 mas_getTimeFile(
                                     "mod_assets/frames/selector_top_frame_selected.png" 
@@ -666,26 +872,26 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                                 ),
                                 left=4, top=4
                             )
-                            padding (5, 5, 5, 5)
+                            padding (4, 2, 4, 2)
                             margin (0, 0)
                             text _("Original"):
-                                xalign 0.0
+                                xalign 0.5
                                 yalign 0.5
+                                text_align 0.5
                                 font gui.default_font
                                 size gui.text_size
+                                layout "nobreak"
                                 bold False
                                 outlines []
                                 color (h_color if is_orig_highlight else i_color)
                                 
-                        frame:
+                        fixed:
                             xsize 180
                             ysize 180
-                            background None
-                            padding (0, 0)
-                            margin (0, 0)
-                            add dtm_get_default_thumb() at dtm_thumb_resize xalign 0.5 yalign 0.5
+                            add Solid(thumb_bg) size (180, 180)
+                            add dtm_get_thumbnail_displayable(None, None, None) xalign 0.5 yalign 0.5
                             add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
-                            if is_orig_hovered:
+                            if is_orig_highlight:
                                 add Solid("#ffaa99aa") size (180, 180) xalign 0.5 yalign 0.5
 
                 # Lista de packs filtrados
@@ -707,20 +913,20 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                         button:
                             style "empty"
                             xsize 180
-                            yminimum 218
+                            ysize 218
                             xalign 0.5
                             hover_sound gui.hover_sound
                             activate_sound gui.activate_sound
                             hovered SetScreenVariable("hovered_item", pack)
                             unhovered SetScreenVariable("hovered_item", None)
-                            action Return("preview:" + pack)
+                            action Function(dtm_apply_preview, store.dtm_active_sub_category, pack)
                             vbox:
                                 xsize 180
                                 spacing 0
                                 
                                 frame:
                                     xsize 180
-                                    yminimum 38
+                                    ysize 38
                                     background Frame(
                                         mas_getTimeFile(
                                             "mod_assets/frames/selector_top_frame_selected.png" 
@@ -729,26 +935,26 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                                         ),
                                         left=4, top=4
                                     )
-                                    padding (5, 5, 5, 5)
+                                    padding (4, 2, 4, 2)
                                     margin (0, 0)
-                                    text pack:
-                                        xalign 0.0
+                                    text dtm_format_pack_name(pack):
+                                        xalign 0.5
                                         yalign 0.5
+                                        text_align 0.5
                                         font gui.default_font
                                         size gui.text_size
+                                        layout "nobreak"
                                         bold False
                                         outlines []
                                         color (h_color if is_highlight else i_color)
                                         
-                                frame:
+                                fixed:
                                     xsize 180
                                     ysize 180
-                                    background None
-                                    padding (0, 0)
-                                    margin (0, 0)
-                                    add dtm_get_thumbnail(store.dtm_active_sub_category, store.dtm_active_sub_category, pack) at dtm_thumb_resize xalign 0.5 yalign 0.5
+                                    add Solid(thumb_bg) size (180, 180)
+                                    add dtm_get_thumbnail_displayable(store.dtm_active_sub_category, store.dtm_active_sub_category, pack) xalign 0.5 yalign 0.5
                                     add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
-                                    if is_pack_hovered:
+                                    if is_highlight:
                                         add Solid("#ffaa99aa") size (180, 180) xalign 0.5 yalign 0.5
 
                 null height 1
@@ -777,7 +983,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
             xalign 0.5
             hover_sound gui.hover_sound
             activate_sound gui.activate_sound
-            action Return("restore")
+            action Function(dtm_restore_preview, store.dtm_active_sub_category)
 
         textbutton _("Cancel"):
             style "hkb_button"
