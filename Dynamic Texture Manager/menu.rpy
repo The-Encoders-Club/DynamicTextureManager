@@ -539,6 +539,10 @@ transform dtm_thumb_resize:
 
 screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_map):
     zorder 50
+    default hovered_item = None
+
+    $ h_color = getattr(store.mas_ui, "light_button_text_hover_color", "#ffffff")
+    $ i_color = getattr(store.mas_globals, "button_text_idle_color", "#000000")
 
     # Categorías / Filtro desplegable - Coordenadas y comportamiento exacto a zz_selector.rpy
     if store.dtm_show_filter:
@@ -555,6 +559,8 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                         style "hkb_button"
                         xysize (280, 40)
                         xalign 0.5
+                        hover_sound gui.hover_sound
+                        activate_sound gui.activate_sound
                         selected (store.dtm_active_sub_category == cat_id)
                         action [
                             SetField(store, "dtm_active_sub_category", cat_id),
@@ -575,6 +581,8 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                 style "filter_dropdown_down"
             else:
                 style "filter_dropdown_up"
+            hover_sound gui.hover_sound
+            activate_sound gui.activate_sound
             action ToggleField(store, "dtm_show_filter")
 
     # Buscador
@@ -587,6 +595,8 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
 
         viewport:
             draggable False
+            arrowkeys False
+            mousewheel "horizontal"
             xsize 195
             ysize 38
             input:
@@ -595,12 +605,16 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                 length 50
                 xalign 0.0
                 layout "nobreak"
+                first_indent (0 if not store.dtm_search_text else 10)
 
         if not store.dtm_search_text:
-            text "Buscar...":
-                xalign 0.05
-                yalign 0.5
+            text _("Search for..."):
+                text_align 0.0
+                layout "nobreak"
                 color "#EEEEEEB2"
+                first_indent 10
+                line_leading 1
+                outlines []
 
     # Lista de packs (Frame exclusivo para la lista)
     frame:
@@ -624,11 +638,18 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                     if not current_active:
                         is_original_active = True
                         
+                $ is_orig_hovered = (hovered_item == "___original___")
+                $ is_orig_highlight = is_original_active or is_orig_hovered
+
                 button:
                     style "empty"
                     xsize 180
-                    ysize 218
+                    yminimum 218
                     xalign 0.5
+                    hover_sound gui.hover_sound
+                    activate_sound gui.activate_sound
+                    hovered SetScreenVariable("hovered_item", "___original___")
+                    unhovered SetScreenVariable("hovered_item", None)
                     action Return("preview_restore")
                     vbox:
                         xsize 180
@@ -636,21 +657,25 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                         
                         frame:
                             xsize 180
-                            ysize 38
+                            yminimum 38
                             background Frame(
                                 mas_getTimeFile(
                                     "mod_assets/frames/selector_top_frame_selected.png" 
-                                    if is_original_active else 
+                                    if is_orig_highlight else 
                                     "mod_assets/frames/selector_top_frame.png"
                                 ),
                                 left=4, top=4
                             )
-                            text "Original":
-                                xalign 0.5
+                            padding (5, 5, 5, 5)
+                            margin (0, 0)
+                            text _("Original"):
+                                xalign 0.0
                                 yalign 0.5
+                                font gui.default_font
+                                size gui.text_size
                                 bold False
                                 outlines []
-                                color ("#ffffff" if is_original_active else "#000000")
+                                color (h_color if is_orig_highlight else i_color)
                                 
                         frame:
                             xsize 180
@@ -660,6 +685,8 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                             margin (0, 0)
                             add dtm_get_default_thumb() at dtm_thumb_resize xalign 0.5 yalign 0.5
                             add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
+                            if is_orig_hovered:
+                                add Solid("#ffaa99aa") size (180, 180) xalign 0.5 yalign 0.5
 
                 # Lista de packs filtrados
                 for pack in packs_list:
@@ -670,15 +697,22 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                             current_active = store.mas_dtm_overrides.get(store.dtm_core.category_to_config_key.get(store.dtm_active_sub_category))
                             if current_active:
                                 import os
-                                act_name = os.path.basename(current_active.rstrip("/\\")).lower()
+                                act_name = os.path.basename(current_active.rstrip("/" + chr(92))).lower()
                                 if act_name == pack.lower():
                                     is_selected = True
-                                    
+
+                        $ is_pack_hovered = (hovered_item == pack)
+                        $ is_highlight = is_selected or is_pack_hovered
+
                         button:
                             style "empty"
                             xsize 180
-                            ysize 218
+                            yminimum 218
                             xalign 0.5
+                            hover_sound gui.hover_sound
+                            activate_sound gui.activate_sound
+                            hovered SetScreenVariable("hovered_item", pack)
+                            unhovered SetScreenVariable("hovered_item", None)
                             action Return("preview:" + pack)
                             vbox:
                                 xsize 180
@@ -686,21 +720,25 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                                 
                                 frame:
                                     xsize 180
-                                    ysize 38
+                                    yminimum 38
                                     background Frame(
                                         mas_getTimeFile(
                                             "mod_assets/frames/selector_top_frame_selected.png" 
-                                            if is_selected else 
+                                            if is_highlight else 
                                             "mod_assets/frames/selector_top_frame.png"
                                         ),
                                         left=4, top=4
                                     )
+                                    padding (5, 5, 5, 5)
+                                    margin (0, 0)
                                     text pack:
-                                        xalign 0.5
+                                        xalign 0.0
                                         yalign 0.5
+                                        font gui.default_font
+                                        size gui.text_size
                                         bold False
                                         outlines []
-                                        color ("#ffffff" if is_selected else "#000000")
+                                        color (h_color if is_highlight else i_color)
                                         
                                 frame:
                                     xsize 180
@@ -710,6 +748,8 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                                     margin (0, 0)
                                     add dtm_get_thumbnail(store.dtm_active_sub_category, store.dtm_active_sub_category, pack) at dtm_thumb_resize xalign 0.5 yalign 0.5
                                     add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
+                                    if is_pack_hovered:
+                                        add Solid("#ffaa99aa") size (180, 180) xalign 0.5 yalign 0.5
 
                 null height 1
 
@@ -725,20 +765,23 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
         xsize 200
         spacing 5
 
-        textbutton _("Confirmar"):
+        textbutton _("Confirm"):
             style "hkb_button"
-            xysize (200, 35)
             xalign 0.5
+            hover_sound gui.hover_sound
+            activate_sound gui.activate_sound
             action Return("confirm")
 
-        textbutton _("Restaurar"):
+        textbutton _("Restore"):
             style "hkb_button"
-            xysize (200, 35)
             xalign 0.5
+            hover_sound gui.hover_sound
+            activate_sound gui.activate_sound
             action Return("restore")
 
-        textbutton _("Cancelar"):
+        textbutton _("Cancel"):
             style "hkb_button"
-            xysize (200, 35)
             xalign 0.5
+            hover_sound gui.hover_sound
+            activate_sound gui.activate_sound
             action Return("cancel")
