@@ -24,6 +24,7 @@ init -10 python:
         "calendar_theme": None,
         "chess_theme": None,
         "pong_field": None,
+        "pong_theme": None,
         "nou_theme": None
     }
 
@@ -176,7 +177,7 @@ init 999 python in dtm_core:
                                 theme_idx = {}
                                 for root, dirs, files in os.walk(theme_path):
                                     for f in files:
-                                        if f.lower().endswith((".png", ".ogg", ".wav")):
+                                        if f.lower().endswith((".png", ".ogg", ".wav", ".mp3", ".jpg", ".jpeg")):
                                             abs_path = os.path.join(root, f)
                                             abs_path_clean = abs_path.replace("\\", "/")
                                             rel_in_theme = os.path.relpath(abs_path, theme_path).replace("\\", "/").lower()
@@ -237,6 +238,12 @@ init 999 python in dtm_core:
     }
 
     def get_category_for_path(norm_name):
+        if not norm_name:
+            return None
+        norm_name = norm_name.replace("\\", "/").lower()
+        if "mod_assets/" in norm_name:
+            norm_name = norm_name[norm_name.index("mod_assets/"):]
+
         if norm_name.startswith("mod_assets/monika/f/"):
             if "eyes-" in norm_name:
                 return "eyes"
@@ -286,6 +293,12 @@ init 999 python in dtm_core:
 
     def get_custom_override(category, requested_path):
         try:
+            if not requested_path:
+                return None
+            requested_path = requested_path.replace("\\", "/").lower()
+            if "mod_assets/" in requested_path:
+                requested_path = requested_path[requested_path.index("mod_assets/"):]
+
             overrides = getattr(store, "mas_dtm_overrides", {})
             if category == "torso" and not overrides.get("body_theme"):
                 if overrides.get("torso_theme"):
@@ -297,6 +310,8 @@ init 999 python in dtm_core:
             theme_path = overrides.get(config_key)
             if not theme_path and category == "body":
                 theme_path = overrides.get("torso_theme")
+            if not theme_path and category == "pong":
+                theme_path = overrides.get("pong_theme")
             if not theme_path:
                 return None
 
@@ -306,6 +321,23 @@ init 999 python in dtm_core:
             if not idx and category == "body":
                 all_cat_themes = getattr(store, "_mas_dtm_indexes", {}).get("torso", {})
                 idx = all_cat_themes.get(theme_name)
+
+            if not idx and theme_path:
+                abs_theme = theme_path if os.path.isabs(theme_path) else os.path.join(store.DTM_BASE_PARENT, theme_path)
+                if os.path.isdir(abs_theme):
+                    idx = {}
+                    for root, dirs, files in os.walk(abs_theme):
+                        for f in files:
+                            if f.lower().endswith((".png", ".ogg", ".wav", ".mp3", ".jpg", ".jpeg")):
+                                abs_f = os.path.join(root, f).replace("\\", "/")
+                                rel_f = os.path.relpath(abs_f, abs_theme).replace("\\", "/").lower()
+                                idx[rel_f] = abs_f
+                                idx[f.lower()] = abs_f
+                    if hasattr(store, "_mas_dtm_indexes"):
+                        if category not in store._mas_dtm_indexes:
+                            store._mas_dtm_indexes[category] = {}
+                        store._mas_dtm_indexes[category][theme_name] = idx
+
             if not idx:
                 return None
 
@@ -357,6 +389,16 @@ init 999 python in dtm_core:
                 if "body-" in basename:
                     candidates.append(basename.partition("body-")[2])
                 candidates.extend(["body-def-0.png", "body-def-1.png"])
+            elif category == "pong":
+                if basename in ("pong.png", "paddle.png"):
+                    candidates.extend(["pong.png", "pong - copy.png", "paddle.png"])
+                elif basename in ("pong_ball.png", "ball.png"):
+                    candidates.extend(["pong_ball.png", "ball.png"])
+                elif basename in ("pong_field.png", "field.png", "bg.png"):
+                    candidates.extend(["pong_field.png", "field.png", "bg.png"])
+            elif category == "chess":
+                if basename in ("chess_board.png", "board.png"):
+                    candidates.extend(["chess_board.png", "board.png"])
 
             final_candidates = []
             for cand in candidates:
@@ -384,10 +426,11 @@ init 999 python in dtm_core:
 
             real_name = name.split("?dtm_theme=")[0] if "?dtm_theme=" in name else name
             norm_name = real_name.replace("\\", "/").lower()
+            clean_norm_name = norm_name[norm_name.index("mod_assets/"):] if "mod_assets/" in norm_name else norm_name
 
-            category = get_category_for_path(norm_name)
+            category = get_category_for_path(clean_norm_name)
             if category:
-                override = get_custom_override(category, norm_name)
+                override = get_custom_override(category, clean_norm_name)
                 if override and os.path.isfile(override):
                     return open(override, "rb")
         except Exception:
@@ -648,12 +691,15 @@ init 999 python in dtm_core:
         force_update_mas_visuals("calendar")
 
     def set_pong_textures(folder_path):
-        store.mas_dtm_overrides["pong_field"] = _make_portable_path(folder_path)
+        p = _make_portable_path(folder_path)
+        store.mas_dtm_overrides["pong_field"] = p
+        store.mas_dtm_overrides["pong_theme"] = p
         store.mas_dtm_save_config()
         force_update_mas_visuals("pong")
 
     def reset_pong_textures():
         store.mas_dtm_overrides["pong_field"] = None
+        store.mas_dtm_overrides["pong_theme"] = None
         store.mas_dtm_save_config()
         force_update_mas_visuals("pong")
 

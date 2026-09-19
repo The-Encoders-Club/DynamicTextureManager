@@ -143,7 +143,7 @@ label mas_dtm_change_textures:
                     (_("Eyebrows"), "dtm_scan_eyebrows"),
                     (_("Eyes"), "dtm_scan_eyes"),
                     (_("Face"), "dtm_scan_face"),
-                    (_("Hair"), "dtm_scan_hair"),
+                    (_("Base Hair Color"), "dtm_scan_hair"),
                     (_("Mouth"), "dtm_scan_mouth"),
                     (_("Nose"), "dtm_scan_nose"),
                     (_("Sweat Drop"), "dtm_scan_sweatdrop"),
@@ -235,7 +235,7 @@ label mas_dtm_change_textures:
                         (_("Eyebrows"), "eyebrows"),
                         (_("Eyes"), "eyes"),
                         (_("Face"), "face"),
-                        (_("Hair"), "hair"),
+                        (_("Base Hair Color"), "hair"),
                         (_("Mouth"), "mouth"),
                         (_("Nose"), "nose"),
                         (_("Sweat Drop"), "sweatdrop"),
@@ -645,8 +645,8 @@ init python:
         "arms": "mod_assets/monika/b/arms-steepling-10.png",
         "hair": "mod_assets/monika/h/def/10.png",
         "face": "mod_assets/monika/b/body-def-head.png",
-        "body": "mod_assets/monika/b/body-def-0.png",
-        "torso": "mod_assets/monika/b/body-def-0.png",
+        "body": "mod_assets/thumbs/unknown.png",
+        "torso": "mod_assets/thumbs/unknown.png",
         "eyes": "mod_assets/monika/f/face-eyes-normal.png",
         "eyebrows": "mod_assets/monika/f/face-eyebrows-mid.png",
         "mouth": "mod_assets/monika/f/face-mouth-smile.png",
@@ -680,8 +680,8 @@ init python:
 
     def dtm_get_monika_face_displayable(feature_path=None, exclude_feature=None):
         import os
-        # Closer Face zoom crop centered directly on nose (633, 358), mouth, eyes and blush
-        f_crop = (495, 200, 280, 280)
+        # Closer Face zoom crop centered directly on nose (633, 358), mouth, eyes and blush (optimized for small/mobile screens)
+        f_crop = (530, 250, 210, 210)
         f_size = (170, 170)
         args = []
 
@@ -877,7 +877,7 @@ init python:
                     cand = _find_file_in_dir(pack_dir, ("body-def-head.png", "face-def-head.png", "head.png", "face.png"), "face", ".png")
                     if cand: return cand
                 elif sub_category in ("body", "torso"):
-                    cand = _find_file_in_dir(pack_dir, ("body-def-0.png", "body-def-1.png"), "body", ".png")
+                    cand = _find_file_in_dir(pack_dir, ("thumb.png", "thumbnail.png", "preview.png"), "thumb", ".png")
                     if cand: return cand
             except:
                 pass
@@ -967,9 +967,11 @@ init python:
                 else:
                     return dtm_get_monika_face_displayable(None, exclude_feature=None)
 
-        # 2. Monika Arms: Zoom to center
+        # 2. Monika Arms: Centered zoom on arms wearing blazerless school uniform with steepling pose
         if sub_category == "arms":
             arms_crop = (470, 420, 340, 340)
+            arms_size = (170, 170)
+            pack_dir = None
             if pack:
                 pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "arms", pack)
                 if os.path.isdir(pack_dir):
@@ -979,15 +981,37 @@ init python:
                             w, h = dtm_get_image_size(thumb_path)
                             scale = min(170.0 / w, 170.0 / h)
                             return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
+
+            arms_img = "mod_assets/monika/b/arms-steepling-10.png?dtm_raw=1"
+            if pack_dir and os.path.isdir(pack_dir):
+                cand = _find_file_in_dir(pack_dir, ("arms-steepling-10.png", "arms-rest-10.png", "arms-left-rest-10.png", "arms-crossed-10.png"), "arms", ".png")
+                if cand and os.path.isabs(cand):
+                    arms_img = cand
+            elif pack:
                 cand = dtm_get_thumbnail(category, sub_category, pack)
                 if cand and os.path.isabs(cand):
-                    return Transform(cand, crop=arms_crop, size=(170, 170))
-            return Transform("mod_assets/monika/b/arms-steepling-10.png?dtm_raw=1", crop=arms_crop, size=(170, 170))
+                    arms_img = cand
 
-        # 3. Monika Body: Full upper body (body-def-0 + body-def-1) with arms in Pose 2
+            return LiveComposite(
+                (170, 170),
+                (0, 0), Transform("mod_assets/monika/h/def/0.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/a/ribbon_def/0.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/b/body-def-0.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/c/blazerless/body-def-0.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/b/body-def-1.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/c/blazerless/body-def-1.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/b/body-def-head.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/f/face-nose-def.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/f/face-mouth-smile.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/h/def/10.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/f/face-eyes-normal.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/f/face-eyebrows-mid.png?dtm_raw=1", crop=arms_crop, size=arms_size),
+                (0, 0), Transform(arms_img, crop=arms_crop, size=arms_size),
+                (0, 0), Transform("mod_assets/monika/c/blazerless/arms-steepling-10.png?dtm_raw=1", crop=arms_crop, size=arms_size)
+            )
+
+        # 3. Monika Body: Question mark to avoid showing unclothed Monika
         if sub_category in ("body", "torso"):
-            body_crop = (440, 450, 400, 400)
-            body_size = (170, 170)
             pack_dir = None
             if pack:
                 pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "body", pack)
@@ -1001,27 +1025,7 @@ init python:
                             scale = min(170.0 / w, 170.0 / h)
                             return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
 
-            body_img_0 = "mod_assets/monika/b/body-def-0.png?dtm_raw=1"
-            body_img_1 = "mod_assets/monika/b/body-def-1.png?dtm_raw=1"
-            if pack_dir and os.path.isdir(pack_dir):
-                c0 = _find_file_in_dir(pack_dir, ("body-def-0.png",), "body", ".png")
-                c1 = _find_file_in_dir(pack_dir, ("body-def-1.png",), None, ".png")
-                if c0 and os.path.isabs(c0):
-                    body_img_0 = c0
-                if c1 and os.path.isabs(c1):
-                    body_img_1 = c1
-            elif pack:
-                cand = dtm_get_thumbnail(category, sub_category, pack)
-                if cand and os.path.isabs(cand):
-                    body_img_0 = cand
-
-            return LiveComposite(
-                (170, 170),
-                (0, 0), Transform(body_img_0, crop=body_crop, size=body_size),
-                (0, 0), Transform(body_img_1, crop=body_crop, size=body_size),
-                (0, 0), Transform("mod_assets/monika/b/arms-crossed-5.png?dtm_raw=1", crop=body_crop, size=body_size),
-                (0, 0), Transform("mod_assets/monika/b/arms-crossed-10.png?dtm_raw=1", crop=body_crop, size=body_size)
-            )
+            return Transform("mod_assets/thumbs/unknown.png", size=(170, 170))
 
         # 4. Monika Base Hair: Full hair composition framed to show ponytail, ribbon and bangs
         if sub_category == "hair":
@@ -1058,11 +1062,11 @@ init python:
                 (0, 0), Transform("mod_assets/monika/a/ribbon_def/0.png?dtm_raw=1", crop=hair_crop, size=hair_size),
                 (0, 0), Transform("mod_assets/monika/b/body-def-0.png?dtm_raw=1", crop=hair_crop, size=hair_size),
                 (0, 0), Transform("mod_assets/monika/b/body-def-head.png?dtm_raw=1", crop=hair_crop, size=hair_size),
-                (0, 0), Transform("mod_assets/monika/f/face-eyes-normal.png?dtm_raw=1", crop=hair_crop, size=hair_size),
-                (0, 0), Transform("mod_assets/monika/f/face-eyebrows-mid.png?dtm_raw=1", crop=hair_crop, size=hair_size),
                 (0, 0), Transform("mod_assets/monika/f/face-nose-def.png?dtm_raw=1", crop=hair_crop, size=hair_size),
                 (0, 0), Transform("mod_assets/monika/f/face-mouth-smile.png?dtm_raw=1", crop=hair_crop, size=hair_size),
-                (0, 0), Transform(hair_front_img, crop=hair_crop, size=hair_size)
+                (0, 0), Transform(hair_front_img, crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/f/face-eyes-normal.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/f/face-eyebrows-mid.png?dtm_raw=1", crop=hair_crop, size=hair_size)
             )
 
         # 4. Promise Ring: Pose 5 (Monika resting hand on cheek with promise ring, zoomed to cheek)
@@ -1129,12 +1133,16 @@ init python:
         # 5. Accessories, Games, Room
         if not pack:
             thumb_path = dtm_get_default_thumb(sub_category)
+            if thumb_path and "?dtm_raw" not in thumb_path and not thumb_path.startswith("mod_assets/thumbs/"):
+                thumb_path = thumb_path + "?dtm_raw=1"
         else:
             thumb_path = dtm_get_thumbnail(category, sub_category, pack)
 
         crop = None
         if sub_category in DTM_ACCESSORY_CROP_MAP:
             p_lower = thumb_path.replace("\\", "/").lower()
+            if "?dtm_raw" in p_lower:
+                p_lower = p_lower.split("?")[0]
             if p_lower.endswith("/0.png") or p_lower.endswith("/2-10.png") or p_lower.endswith("quetzalplushie/0.png") or "monika/a/" in p_lower:
                 crop = DTM_ACCESSORY_CROP_MAP[sub_category]
 
