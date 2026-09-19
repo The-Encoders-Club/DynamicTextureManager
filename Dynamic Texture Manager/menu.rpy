@@ -77,7 +77,8 @@ label mas_dtm_change_textures:
             "monika/tears",
             "monika/sweatdrop",
             "monika/arms",
-            "monika/torso",
+            "monika/hair",
+            "monika/face",
             "monika/body",
             "accessories/mug",
             "accessories/hotchoc_mug",
@@ -141,11 +142,12 @@ label mas_dtm_change_textures:
                     (_("Body"), "dtm_scan_body"),
                     (_("Eyebrows"), "dtm_scan_eyebrows"),
                     (_("Eyes"), "dtm_scan_eyes"),
+                    (_("Face"), "dtm_scan_face"),
+                    (_("Hair"), "dtm_scan_hair"),
                     (_("Mouth"), "dtm_scan_mouth"),
                     (_("Nose"), "dtm_scan_nose"),
                     (_("Sweat Drop"), "dtm_scan_sweatdrop"),
-                    (_("Tears"), "dtm_scan_tears"),
-                    (_("Torso"), "dtm_scan_torso")
+                    (_("Tears"), "dtm_scan_tears")
                 ]
             elif dtm_current_view == "dtm_accessories":
                 main_items = [
@@ -177,8 +179,10 @@ label mas_dtm_change_textures:
                     "tears": "monika/tears",
                     "sweatdrop": "monika/sweatdrop",
                     "arms": "monika/arms",
-                    "torso": "monika/torso",
+                    "hair": "monika/hair",
+                    "face": "monika/face",
                     "body": "monika/body",
+                    "torso": "monika/body",
                     "mug": "accessories/mug",
                     "hotchoc_mug": "accessories/hotchoc_mug",
                     "promisering": "accessories/promisering",
@@ -230,11 +234,12 @@ label mas_dtm_change_textures:
                         (_("Body"), "body"),
                         (_("Eyebrows"), "eyebrows"),
                         (_("Eyes"), "eyes"),
+                        (_("Face"), "face"),
+                        (_("Hair"), "hair"),
                         (_("Mouth"), "mouth"),
                         (_("Nose"), "nose"),
                         (_("Sweat Drop"), "sweatdrop"),
-                        (_("Tears"), "tears"),
-                        (_("Torso"), "torso")
+                        (_("Tears"), "tears")
                     ]
                 elif dtm_current_view == "dtm_accessories":
                     dtm_categories_list = [
@@ -266,8 +271,10 @@ label mas_dtm_change_textures:
                     "tears": ("monika", "tears"),
                     "sweatdrop": ("monika", "sweatdrop"),
                     "arms": ("monika", "arms"),
-                    "torso": ("monika", "torso"),
+                    "hair": ("monika", "hair"),
+                    "face": ("monika", "face"),
                     "body": ("monika", "body"),
+                    "torso": ("monika", "body"),
                     "mug": ("accessories", "mug"),
                     "hotchoc_mug": ("accessories", "hotchoc_mug"),
                     "promisering": ("accessories", "promisering"),
@@ -301,8 +308,10 @@ label mas_dtm_change_textures:
                     "tears": store.dtm_core.set_tears_textures,
                     "sweatdrop": store.dtm_core.set_sweatdrop_textures,
                     "arms": store.dtm_core.set_arms_textures,
-                    "torso": store.dtm_core.set_torso_textures,
+                    "hair": store.dtm_core.set_hair_textures,
+                    "face": store.dtm_core.set_face_textures,
                     "body": store.dtm_core.set_body_textures,
+                    "torso": store.dtm_core.set_body_textures,
                     "mug": store.dtm_core.set_mug_textures,
                     "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
                     "promisering": store.dtm_core.set_promisering_textures,
@@ -323,8 +332,10 @@ label mas_dtm_change_textures:
                     "tears": store.dtm_core.reset_tears_textures,
                     "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
                     "arms": store.dtm_core.reset_arms_textures,
-                    "torso": store.dtm_core.reset_torso_textures,
+                    "hair": store.dtm_core.reset_hair_textures,
+                    "face": store.dtm_core.reset_face_textures,
                     "body": store.dtm_core.reset_body_textures,
+                    "torso": store.dtm_core.reset_body_textures,
                     "mug": store.dtm_core.reset_mug_textures,
                     "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
                     "promisering": store.dtm_core.reset_promisering_textures,
@@ -393,8 +404,10 @@ label mas_dtm_change_textures:
                             "tears": ("monika", "tears"),
                             "sweatdrop": ("monika", "sweatdrop"),
                             "arms": ("monika", "arms"),
-                            "torso": ("monika", "torso"),
+                            "hair": ("monika", "hair"),
+                            "face": ("monika", "face"),
                             "body": ("monika", "body"),
+                            "torso": ("monika", "body"),
                             "mug": ("accessories", "mug"),
                             "hotchoc_mug": ("accessories", "hotchoc_mug"),
                             "promisering": ("accessories", "promisering"),
@@ -417,8 +430,10 @@ label mas_dtm_change_textures:
                             "tears": store.dtm_core.set_tears_textures,
                             "sweatdrop": store.dtm_core.set_sweatdrop_textures,
                             "arms": store.dtm_core.set_arms_textures,
-                            "torso": store.dtm_core.set_torso_textures,
+                            "hair": store.dtm_core.set_hair_textures,
+                            "face": store.dtm_core.set_face_textures,
                             "body": store.dtm_core.set_body_textures,
+                            "torso": store.dtm_core.set_body_textures,
                             "mug": store.dtm_core.set_mug_textures,
                             "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
                             "promisering": store.dtm_core.set_promisering_textures,
@@ -445,8 +460,10 @@ label mas_dtm_change_textures:
                             "tears": store.dtm_core.reset_tears_textures,
                             "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
                             "arms": store.dtm_core.reset_arms_textures,
-                            "torso": store.dtm_core.reset_torso_textures,
+                            "hair": store.dtm_core.reset_hair_textures,
+                            "face": store.dtm_core.reset_face_textures,
                             "body": store.dtm_core.reset_body_textures,
+                            "torso": store.dtm_core.reset_body_textures,
                             "mug": store.dtm_core.reset_mug_textures,
                             "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
                             "promisering": store.dtm_core.reset_promisering_textures,
@@ -532,8 +549,10 @@ init python:
             "tears": ("monika", "tears"),
             "sweatdrop": ("monika", "sweatdrop"),
             "arms": ("monika", "arms"),
-            "torso": ("monika", "torso"),
+            "hair": ("monika", "hair"),
+            "face": ("monika", "face"),
             "body": ("monika", "body"),
+            "torso": ("monika", "body"),
             "mug": ("accessories", "mug"),
             "hotchoc_mug": ("accessories", "hotchoc_mug"),
             "promisering": ("accessories", "promisering"),
@@ -554,8 +573,10 @@ init python:
             "tears": store.dtm_core.set_tears_textures,
             "sweatdrop": store.dtm_core.set_sweatdrop_textures,
             "arms": store.dtm_core.set_arms_textures,
-            "torso": store.dtm_core.set_torso_textures,
+            "hair": store.dtm_core.set_hair_textures,
+            "face": store.dtm_core.set_face_textures,
             "body": store.dtm_core.set_body_textures,
+            "torso": store.dtm_core.set_body_textures,
             "mug": store.dtm_core.set_mug_textures,
             "hotchoc_mug": store.dtm_core.set_hotchoc_mug_textures,
             "promisering": store.dtm_core.set_promisering_textures,
@@ -583,8 +604,10 @@ init python:
             "tears": store.dtm_core.reset_tears_textures,
             "sweatdrop": store.dtm_core.reset_sweatdrop_textures,
             "arms": store.dtm_core.reset_arms_textures,
-            "torso": store.dtm_core.reset_torso_textures,
+            "hair": store.dtm_core.reset_hair_textures,
+            "face": store.dtm_core.reset_face_textures,
             "body": store.dtm_core.reset_body_textures,
+            "torso": store.dtm_core.reset_body_textures,
             "mug": store.dtm_core.reset_mug_textures,
             "hotchoc_mug": store.dtm_core.reset_hotchoc_mug_textures,
             "promisering": store.dtm_core.reset_promisering_textures,
@@ -614,14 +637,16 @@ init python:
         "thermos_mug": "mod_assets/monika/a/thermos_mug/0.png",
         "roses": "mod_assets/monika/a/roses/0.png",
         "quetzal": "mod_assets/monika/a/quetzalplushie/0.png",
-        "promisering": "mod_assets/monika/a/promisering/3-10.png",
+        "promisering": "mod_assets/monika/a/promisering/5-10.png",
         "calendar": "mod_assets/calendar/calendar_bg.png",
         "chess": "mod_assets/games/chess/chess_board.png",
         "pong": "mod_assets/games/pong/pong_field.png",
         "nou": "mod_assets/games/nou/cards/v1.png",
         "arms": "mod_assets/monika/b/arms-steepling-10.png",
+        "hair": "mod_assets/monika/h/def/10.png",
+        "face": "mod_assets/monika/b/body-def-head.png",
+        "body": "mod_assets/monika/b/body-def-0.png",
         "torso": "mod_assets/monika/b/body-def-0.png",
-        "body": "mod_assets/monika/b/body-def-head.png",
         "eyes": "mod_assets/monika/f/face-eyes-normal.png",
         "eyebrows": "mod_assets/monika/f/face-eyebrows-mid.png",
         "mouth": "mod_assets/monika/f/face-mouth-smile.png",
@@ -655,7 +680,8 @@ init python:
 
     def dtm_get_monika_face_displayable(feature_path=None, exclude_feature=None):
         import os
-        f_crop = (445, 115, 390, 390)
+        # Closer Face zoom crop centered directly on nose (633, 358), mouth, eyes and blush
+        f_crop = (495, 200, 280, 280)
         f_size = (170, 170)
         args = []
 
@@ -670,20 +696,25 @@ init python:
         if h_back:
             args.extend([(0, 0), Transform(h_back + "?dtm_raw=1", crop=f_crop, size=f_size)])
 
-        # 2. Body (neck & shoulders)
+        # 2. White ribbon (canonical 0.png)
+        ribbon = _check_asset("mod_assets/monika/a/ribbon_def/0.png")
+        if ribbon:
+            args.extend([(0, 0), Transform(ribbon + "?dtm_raw=1", crop=f_crop, size=f_size)])
+
+        # 3. Body (neck & shoulders base)
         body = _check_asset("mod_assets/monika/b/body-def-0.png")
         if body:
             args.extend([(0, 0), Transform(body + "?dtm_raw=1", crop=f_crop, size=f_size)])
 
-        # 3. Head base
-        if exclude_feature == "body" and feature_path:
+        # 4. Head base
+        if exclude_feature in ("face", "body") and feature_path:
             args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
         else:
             head = _check_asset("mod_assets/monika/b/body-def-head.png")
             if head:
                 args.extend([(0, 0), Transform(head + "?dtm_raw=1", crop=f_crop, size=f_size)])
 
-        # 4. Nose & Mouth (under front bangs)
+        # 5. Nose & Mouth (under front bangs)
         if exclude_feature != "nose":
             p_nose = _check_asset("mod_assets/monika/f/face-nose-def.png")
             if p_nose:
@@ -698,12 +729,12 @@ init python:
         elif feature_path:
             args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
 
-        # 5. Hair front (canonical brown 10.png bangs)
+        # 6. Hair front (canonical brown 10.png bangs)
         h_front = _check_asset("mod_assets/monika/h/def/10.png", "mod_assets/monika/h/hair-def-front.png")
         if h_front:
             args.extend([(0, 0), Transform(h_front + "?dtm_raw=1", crop=f_crop, size=f_size)])
 
-        # 6. Eyes (drawn ON TOP of front hair bangs)
+        # 7. Eyes (drawn ON TOP of front hair bangs)
         if exclude_feature != "eyes":
             p_eyes = _check_asset("mod_assets/monika/f/face-eyes-normal.png")
             if p_eyes:
@@ -711,7 +742,7 @@ init python:
         elif feature_path:
             args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
 
-        # 7. Eyebrows (drawn ON TOP of front hair bangs)
+        # 8. Eyebrows (drawn ON TOP of front hair bangs)
         if exclude_feature != "eyebrows":
             p_brows = _check_asset("mod_assets/monika/f/face-eyebrows-mid.png")
             if p_brows:
@@ -719,8 +750,8 @@ init python:
         elif feature_path:
             args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
 
-        # 8. Extra expressions: blush, tears, sweatdrop (ON TOP of everything)
-        if exclude_feature not in ("nose", "mouth", "eyes", "eyebrows", "body") and feature_path:
+        # 9. Extra expressions: blush, tears, sweatdrop (ON TOP of everything)
+        if exclude_feature not in ("nose", "mouth", "eyes", "eyebrows", "face", "body") and feature_path:
             args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
 
         if not args:
@@ -751,8 +782,10 @@ init python:
             "tears": ("monika", "tears"),
             "sweatdrop": ("monika", "sweatdrop"),
             "arms": ("monika", "arms"),
-            "torso": ("monika", "torso"),
+            "hair": ("monika", "hair"),
+            "face": ("monika", "face"),
             "body": ("monika", "body"),
+            "torso": ("monika", "body"),
             "mug": ("accessories", "mug"),
             "hotchoc_mug": ("accessories", "hotchoc_mug"),
             "promisering": ("accessories", "promisering"),
@@ -808,7 +841,7 @@ init python:
                         if os.path.exists(cand):
                             return cand.replace("\\", "/")
                 elif sub_category == "promisering":
-                    for r_name in ("3-10.png", "2-10.png", "0.png"):
+                    for r_name in ("5-10.png", "3-10.png", "2-10.png", "0.png"):
                         cand = os.path.join(pack_dir, r_name)
                         if os.path.exists(cand):
                             return cand.replace("\\", "/")
@@ -837,11 +870,14 @@ init python:
                 elif sub_category == "arms":
                     cand = _find_file_in_dir(pack_dir, ("arms-steepling-10.png", "arms-rest-10.png", "arms-left-rest-10.png", "arms-crossed-10.png"), "arms", ".png")
                     if cand: return cand
-                elif sub_category == "torso":
-                    cand = _find_file_in_dir(pack_dir, ("body-def-0.png",), "torso", ".png")
+                elif sub_category == "hair":
+                    cand = _find_file_in_dir(pack_dir, ("10.png", "hair-def-front.png", "0.png", "hair-def-back.png"), "hair", ".png")
                     if cand: return cand
-                elif sub_category == "body":
-                    cand = _find_file_in_dir(pack_dir, ("body-def-head.png", "body-def-0.png"), "body", ".png")
+                elif sub_category == "face":
+                    cand = _find_file_in_dir(pack_dir, ("body-def-head.png", "face-def-head.png", "head.png", "face.png"), "face", ".png")
+                    if cand: return cand
+                elif sub_category in ("body", "torso"):
+                    cand = _find_file_in_dir(pack_dir, ("body-def-0.png", "body-def-1.png"), "body", ".png")
                     if cand: return cand
             except:
                 pass
@@ -900,8 +936,8 @@ init python:
         import os
 
         # 1. Monika facial parts: Composed Face
-        monika_face_parts = ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop", "body")
-        if sub_category in monika_face_parts:
+        monika_face_parts = ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop", "face")
+        if sub_category in monika_face_parts or sub_category == "body" and False:
             if pack:
                 # Check dedicated thumbnail
                 p_sub = ("monika", sub_category)
@@ -917,7 +953,7 @@ init python:
                             return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
 
                 cand = dtm_get_thumbnail(category, sub_category, pack)
-                exclude = sub_category if sub_category in ("eyes", "eyebrows", "mouth", "nose", "body") else None
+                exclude = sub_category if sub_category in ("eyes", "eyebrows", "mouth", "nose", "face", "body") else None
                 feat_path = cand if cand and os.path.isabs(cand) else None
                 return dtm_get_monika_face_displayable(feature_path=feat_path, exclude_feature=exclude)
             else:
@@ -948,11 +984,15 @@ init python:
                     return Transform(cand, crop=arms_crop, size=(170, 170))
             return Transform("mod_assets/monika/b/arms-steepling-10.png?dtm_raw=1", crop=arms_crop, size=(170, 170))
 
-        # 3. Monika Torso: Zoom to upper torso
-        if sub_category == "torso":
-            torso_crop = (480, 440, 340, 340)
+        # 3. Monika Body: Full upper body (body-def-0 + body-def-1) with arms in Pose 2
+        if sub_category in ("body", "torso"):
+            body_crop = (440, 450, 400, 400)
+            body_size = (170, 170)
+            pack_dir = None
             if pack:
-                pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "torso", pack)
+                pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "body", pack)
+                if not os.path.isdir(pack_dir):
+                    pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "torso", pack)
                 if os.path.isdir(pack_dir):
                     for f in os.listdir(pack_dir):
                         if f.lower() in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
@@ -960,14 +1000,74 @@ init python:
                             w, h = dtm_get_image_size(thumb_path)
                             scale = min(170.0 / w, 170.0 / h)
                             return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
+
+            body_img_0 = "mod_assets/monika/b/body-def-0.png?dtm_raw=1"
+            body_img_1 = "mod_assets/monika/b/body-def-1.png?dtm_raw=1"
+            if pack_dir and os.path.isdir(pack_dir):
+                c0 = _find_file_in_dir(pack_dir, ("body-def-0.png",), "body", ".png")
+                c1 = _find_file_in_dir(pack_dir, ("body-def-1.png",), None, ".png")
+                if c0 and os.path.isabs(c0):
+                    body_img_0 = c0
+                if c1 and os.path.isabs(c1):
+                    body_img_1 = c1
+            elif pack:
                 cand = dtm_get_thumbnail(category, sub_category, pack)
                 if cand and os.path.isabs(cand):
-                    return Transform(cand, crop=torso_crop, size=(170, 170))
-            return Transform("mod_assets/monika/b/body-def-0.png?dtm_raw=1", crop=torso_crop, size=(170, 170))
+                    body_img_0 = cand
 
-        # 4. Promise Ring: Pose 3 hand with ring zoom
+            return LiveComposite(
+                (170, 170),
+                (0, 0), Transform(body_img_0, crop=body_crop, size=body_size),
+                (0, 0), Transform(body_img_1, crop=body_crop, size=body_size),
+                (0, 0), Transform("mod_assets/monika/b/arms-crossed-5.png?dtm_raw=1", crop=body_crop, size=body_size),
+                (0, 0), Transform("mod_assets/monika/b/arms-crossed-10.png?dtm_raw=1", crop=body_crop, size=body_size)
+            )
+
+        # 4. Monika Base Hair: Full hair composition framed to show ponytail, ribbon and bangs
+        if sub_category == "hair":
+            hair_crop = (440, 40, 400, 400)
+            hair_size = (170, 170)
+            pack_dir = None
+            if pack:
+                pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "hair", pack)
+                if os.path.isdir(pack_dir):
+                    for f in os.listdir(pack_dir):
+                        if f.lower() in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
+                            thumb_path = os.path.join(pack_dir, f).replace("\\", "/")
+                            w, h = dtm_get_image_size(thumb_path)
+                            scale = min(170.0 / w, 170.0 / h)
+                            return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
+
+            hair_back_img = "mod_assets/monika/h/def/0.png?dtm_raw=1"
+            hair_front_img = "mod_assets/monika/h/def/10.png?dtm_raw=1"
+            if pack_dir and os.path.isdir(pack_dir):
+                c_b = _find_file_in_dir(pack_dir, ("0.png", "hair-def-back.png", "def-0.png"), "back", ".png")
+                c_f = _find_file_in_dir(pack_dir, ("10.png", "hair-def-front.png", "def-10.png"), "front", ".png")
+                if c_b and os.path.isabs(c_b):
+                    hair_back_img = c_b
+                if c_f and os.path.isabs(c_f):
+                    hair_front_img = c_f
+            elif pack:
+                cand = dtm_get_thumbnail(category, sub_category, pack)
+                if cand and os.path.isabs(cand):
+                    hair_front_img = cand
+
+            return LiveComposite(
+                (170, 170),
+                (0, 0), Transform(hair_back_img, crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/a/ribbon_def/0.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/b/body-def-0.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/b/body-def-head.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/f/face-eyes-normal.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/f/face-eyebrows-mid.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/f/face-nose-def.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform("mod_assets/monika/f/face-mouth-smile.png?dtm_raw=1", crop=hair_crop, size=hair_size),
+                (0, 0), Transform(hair_front_img, crop=hair_crop, size=hair_size)
+            )
+
+        # 4. Promise Ring: Pose 5 (Monika resting hand on cheek with promise ring, zoomed to cheek)
         if sub_category == "promisering":
-            ring_crop = (550, 380, 180, 180)
+            # Check dedicated thumbnail first
             if pack:
                 pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "accessories", "promisering", pack)
                 if os.path.isdir(pack_dir):
@@ -977,16 +1077,53 @@ init python:
                             w, h = dtm_get_image_size(thumb_path)
                             scale = min(170.0 / w, 170.0 / h)
                             return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
-                cand = dtm_get_thumbnail(category, sub_category, pack)
-                feat = cand if cand and os.path.isabs(cand) else "mod_assets/monika/a/promisering/3-10.png?dtm_raw=1"
-            else:
-                feat = "mod_assets/monika/a/promisering/3-10.png?dtm_raw=1"
 
-            arms_img = "mod_assets/monika/b/arms-left-rest-10.png?dtm_raw=1"
+            p5_crop = (635, 295, 220, 220)
+            p5_size = (170, 170)
+
+            # Check custom pack ring texture or default 5-10.png
+            ring_img = "mod_assets/monika/a/promisering/5-10.png?dtm_raw=1"
+            if pack:
+                cand = dtm_get_thumbnail(category, sub_category, pack)
+                if cand and os.path.isabs(cand):
+                    ring_img = cand
+
+            # Canonical MAS leaning hair (def-0.png back, def-10.png front)
+            def _find_leaning_hair(front=True):
+                code = "10" if front else "0"
+                suffix = "front" if front else "back"
+                candidates = (
+                    "mod_assets/monika/h/def/def-" + code + ".png",
+                    "mod_assets/monika/h/def/hair-leaning-def-def-" + suffix + "-brown.png",
+                    "Submods/DynamicTextureManager/Dynamic Texture Manager/hair-leaning-def-def-" + suffix + "-brown.png",
+                    "mod_assets/monika/h/def/hair-leaning-def-def-" + suffix + ".png",
+                    "mod_assets/monika/h/hair-leaning-def-def-" + suffix + ".png"
+                )
+                for c in candidates:
+                    if os.path.exists(os.path.join(config.gamedir, c)):
+                        return c
+                return "mod_assets/monika/h/def/def-" + code + ".png"
+
+            p5_h_back = _find_leaning_hair(False) + "?dtm_raw=1"
+            p5_h_front = _find_leaning_hair(True) + "?dtm_raw=1"
+
             return LiveComposite(
                 (170, 170),
-                (0, 0), Transform(arms_img, crop=ring_crop, size=(170, 170)),
-                (0, 0), Transform(feat, crop=ring_crop, size=(170, 170))
+                (0, 0), Transform(p5_h_back, crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/a/ribbon_def/5.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/b/body-leaning-def-0.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/b/body-leaning-def-1.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/b/body-leaning-def-head.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/c/def/body-leaning-def-0.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/c/def/body-leaning-def-1.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/f/face-leaning-def-nose-def.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/f/face-leaning-def-mouth-smile.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform(p5_h_front, crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/f/face-leaning-def-eyes-normal.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/f/face-leaning-def-eyebrows-mid.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/b/arms-leaning-def-left-def-10.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform("mod_assets/monika/c/def/arms-leaning-def-left-def-10.png?dtm_raw=1", crop=p5_crop, size=p5_size),
+                (0, 0), Transform(ring_img, crop=p5_crop, size=p5_size)
             )
 
         # 5. Accessories, Games, Room
@@ -1186,7 +1323,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                             add dtm_get_thumbnail_displayable(None, store.dtm_active_sub_category, None) xalign 0.5 yalign 0.5
                             add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
                             if is_orig_highlight:
-                                add Solid("#ffaa99aa") size (180, 180) xalign 0.5 yalign 0.5
+                                add Solid("#ffaa9933") size (180, 180) xalign 0.5 yalign 0.5
 
                 # Lista de packs filtrados
                 for pack in packs_list:
@@ -1249,7 +1386,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                                     add dtm_get_thumbnail_displayable(store.dtm_active_sub_category, store.dtm_active_sub_category, pack) xalign 0.5 yalign 0.5
                                     add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
                                     if is_highlight:
-                                        add Solid("#ffaa99aa") size (180, 180) xalign 0.5 yalign 0.5
+                                        add Solid("#ffaa9933") size (180, 180) xalign 0.5 yalign 0.5
 
                 null height 1
 

@@ -11,8 +11,10 @@ init -10 python:
         "tears_theme": None,
         "sweatdrop_theme": None,
         "arms_theme": None,
-        "torso_theme": None,
+        "hair_theme": None,
+        "face_theme": None,
         "body_theme": None,
+        "torso_theme": None,
         "mug_theme": None,
         "hotchoc_theme": None,
         "promisering_theme": None,
@@ -122,8 +124,10 @@ init 999 python in dtm_core:
                 "tears": {},
                 "sweatdrop": {},
                 "arms": {},
-                "torso": {},
+                "hair": {},
+                "face": {},
                 "body": {},
+                "torso": {},
                 "mug": {},
                 "hotchoc_mug": {},
                 "promisering": {},
@@ -145,8 +149,10 @@ init 999 python in dtm_core:
                 "tears": ("monika", "tears"),
                 "sweatdrop": ("monika", "sweatdrop"),
                 "arms": ("monika", "arms"),
-                "torso": ("monika", "torso"),
+                "hair": ("monika", "hair"),
+                "face": ("monika", "face"),
                 "body": ("monika", "body"),
+                "torso": ("monika", "body"),
                 "mug": ("accessories", "mug"),
                 "hotchoc_mug": ("accessories", "hotchoc_mug"),
                 "promisering": ("accessories", "promisering"),
@@ -189,8 +195,10 @@ init 999 python in dtm_core:
         "tears": "mod_assets/monika/f/",
         "sweatdrop": "mod_assets/monika/f/",
         "arms": "mod_assets/monika/b/",
-        "torso": "mod_assets/monika/b/",
+        "hair": "mod_assets/monika/h/",
+        "face": "mod_assets/monika/b/",
         "body": "mod_assets/monika/b/",
+        "torso": "mod_assets/monika/b/",
         "mug": "mod_assets/monika/a/mug/",
         "hotchoc_mug": "mod_assets/monika/a/hotchoc_mug/",
         "promisering": "mod_assets/monika/a/promisering/",
@@ -212,8 +220,10 @@ init 999 python in dtm_core:
         "tears": "tears_theme",
         "sweatdrop": "sweatdrop_theme",
         "arms": "arms_theme",
-        "torso": "torso_theme",
+        "hair": "hair_theme",
+        "face": "face_theme",
         "body": "body_theme",
+        "torso": "body_theme",
         "mug": "mug_theme",
         "hotchoc_mug": "hotchoc_theme",
         "promisering": "promisering_theme",
@@ -242,11 +252,13 @@ init 999 python in dtm_core:
                 return "tears"
             elif "sweatdrop-" in norm_name:
                 return "sweatdrop"
+        elif norm_name.startswith("mod_assets/monika/h/"):
+            return "hair"
         elif norm_name.startswith("mod_assets/monika/b/"):
             if "arms-" in norm_name:
                 return "arms"
-            elif "body-" in norm_name:
-                return "torso"
+            elif "head" in norm_name:
+                return "face"
             else:
                 return "body"
         elif norm_name.startswith("mod_assets/monika/a/"):
@@ -275,18 +287,25 @@ init 999 python in dtm_core:
     def get_custom_override(category, requested_path):
         try:
             overrides = getattr(store, "mas_dtm_overrides", {})
-            if category in ("arms", "torso") and not overrides.get(category_to_config_key.get(category)):
-                if overrides.get("body_theme"):
+            if category == "torso" and not overrides.get("body_theme"):
+                if overrides.get("torso_theme"):
+                    category = "torso"
+                else:
                     category = "body"
 
             config_key = category_to_config_key.get(category)
             theme_path = overrides.get(config_key)
+            if not theme_path and category == "body":
+                theme_path = overrides.get("torso_theme")
             if not theme_path:
                 return None
 
             theme_name = os.path.basename(theme_path.rstrip("/\\")).lower()
             all_cat_themes = getattr(store, "_mas_dtm_indexes", {}).get(category, {})
             idx = all_cat_themes.get(theme_name)
+            if not idx and category == "body":
+                all_cat_themes = getattr(store, "_mas_dtm_indexes", {}).get("torso", {})
+                idx = all_cat_themes.get(theme_name)
             if not idx:
                 return None
 
@@ -316,17 +335,28 @@ init 999 python in dtm_core:
                     candidates.append("face-" + pfx_key + code)
                     candidates.append("face-leaning-def-" + pfx_key + code)
 
+            elif category == "hair":
+                if "hair-def-back" in basename or basename == "0.png":
+                    candidates.extend(["0.png", "hair-def-back.png", "def/0.png", "def-back.png", "hair-def-def-back.png"])
+                elif "hair-def-front" in basename or basename == "10.png":
+                    candidates.extend(["10.png", "hair-def-front.png", "def/10.png", "def-front.png", "hair-def-def-front.png"])
+                elif "def-0" in basename or "def-back" in basename:
+                    candidates.extend(["def-0.png", "hair-leaning-def-def-back.png", "hair-leaning-def-back.png", "0.png"])
+                elif "def-10" in basename or "def-front" in basename:
+                    candidates.extend(["def-10.png", "hair-leaning-def-def-front.png", "hair-leaning-def-front.png", "10.png"])
+                else:
+                    candidates.append(basename)
+
             elif category == "arms":
                 if "arms-" in basename:
                     candidates.append(basename.partition("arms-")[2])
-            elif category == "torso":
+            elif category == "face":
+                if "head" in basename:
+                    candidates.extend(["body-def-head.png", "head.png", "face-def-head.png", "face.png"])
+            elif category in ("body", "torso"):
                 if "body-" in basename:
                     candidates.append(basename.partition("body-")[2])
-            elif category == "body":
-                if "body-" in basename:
-                    candidates.append(basename.partition("body-")[2])
-                elif "arms-" in basename:
-                    candidates.append(basename.partition("arms-")[2])
+                candidates.extend(["body-def-0.png", "body-def-1.png"])
 
             final_candidates = []
             for cand in candidates:
@@ -379,14 +409,16 @@ init 999 python in dtm_core:
             # 1. Clear MAS composite sprite caches for affected categories
             if hasattr(store, "mas_sprites"):
                 cids = []
-                if category in ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop"):
+                if category in ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop", "face"):
                     cids = [1]
                 elif category in ("arms", "torso", "body"):
                     cids = [2, 3]
+                elif category == "hair":
+                    cids = [0, 4]
                 elif category in ("mug", "hotchoc_mug", "promisering", "quetzal", "roses", "thermos_mug"):
                     cids = [5]
                 else:
-                    cids = [1, 2, 3, 4, 5]
+                    cids = [0, 1, 2, 3, 4, 5]
 
                 if hasattr(store.mas_sprites, "_gc"):
                     for cid in cids:
@@ -509,15 +541,25 @@ init 999 python in dtm_core:
         store.mas_dtm_save_config()
         force_update_mas_visuals("arms")
 
-    def set_torso_textures(folder_path):
-        store.mas_dtm_overrides["torso_theme"] = _make_portable_path(folder_path)
+    def set_hair_textures(folder_path):
+        store.mas_dtm_overrides["hair_theme"] = _make_portable_path(folder_path)
         store.mas_dtm_save_config()
-        force_update_mas_visuals("torso")
+        force_update_mas_visuals("hair")
 
-    def reset_torso_textures():
-        store.mas_dtm_overrides["torso_theme"] = None
+    def reset_hair_textures():
+        store.mas_dtm_overrides["hair_theme"] = None
         store.mas_dtm_save_config()
-        force_update_mas_visuals("torso")
+        force_update_mas_visuals("hair")
+
+    def set_face_textures(folder_path):
+        store.mas_dtm_overrides["face_theme"] = _make_portable_path(folder_path)
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("face")
+
+    def reset_face_textures():
+        store.mas_dtm_overrides["face_theme"] = None
+        store.mas_dtm_save_config()
+        force_update_mas_visuals("face")
 
     def set_body_textures(folder_path):
         store.mas_dtm_overrides["body_theme"] = _make_portable_path(folder_path)
@@ -528,6 +570,12 @@ init 999 python in dtm_core:
         store.mas_dtm_overrides["body_theme"] = None
         store.mas_dtm_save_config()
         force_update_mas_visuals("body")
+
+    def set_torso_textures(folder_path):
+        set_body_textures(folder_path)
+
+    def reset_torso_textures():
+        reset_body_textures()
 
     def set_mug_textures(folder_path):
         store.mas_dtm_overrides["mug_theme"] = _make_portable_path(folder_path)
@@ -636,15 +684,15 @@ init 999 python in dtm_core:
             force_update_mas_visuals(category)
 
     def restore_preview_textures(initial_overrides):
+        if not initial_overrides:
+            return
+        changed = False
         for config_key, path in initial_overrides.items():
-            category = None
-            for cat, key in category_to_config_key.items():
-                if key == config_key:
-                    category = cat
-                    break
-            if category:
+            if store.mas_dtm_overrides.get(config_key) != path:
                 store.mas_dtm_overrides[config_key] = path
-                force_update_mas_visuals(category)
+                changed = True
+        if changed:
+            force_update_mas_visuals(None)
 
 init 1000 python:
     if hasattr(store, "dtm_core") and store.dtm_core:
