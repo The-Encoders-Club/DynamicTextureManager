@@ -347,6 +347,11 @@ init 999 python in dtm_core:
             if not isinstance(name, basestring):
                 return renpy.loader._dtm_original_load(name, *args, **kwargs)
 
+            # Bypass DTM override if ?dtm_raw is requested
+            if "?dtm_raw" in name:
+                clean_name = name.split("?")[0]
+                return renpy.loader._dtm_original_load(clean_name, *args, **kwargs)
+
             real_name = name.split("?dtm_theme=")[0] if "?dtm_theme=" in name else name
             norm_name = real_name.replace("\\", "/").lower()
 
