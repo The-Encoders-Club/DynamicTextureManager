@@ -655,7 +655,7 @@ init python:
 
     def dtm_get_monika_face_displayable(feature_path=None, exclude_feature=None):
         import os
-        f_crop = (460, 160, 360, 360)
+        f_crop = (445, 115, 390, 390)
         f_size = (170, 170)
         args = []
 
@@ -676,39 +676,52 @@ init python:
             args.extend([(0, 0), Transform(body + "?dtm_raw=1", crop=f_crop, size=f_size)])
 
         # 3. Head base
-        head = _check_asset("mod_assets/monika/b/body-def-head.png")
-        if head:
-            args.extend([(0, 0), Transform(head + "?dtm_raw=1", crop=f_crop, size=f_size)])
+        if exclude_feature == "body" and feature_path:
+            args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
+        else:
+            head = _check_asset("mod_assets/monika/b/body-def-head.png")
+            if head:
+                args.extend([(0, 0), Transform(head + "?dtm_raw=1", crop=f_crop, size=f_size)])
 
-        # 4. Base facial features (?dtm_raw=1 bypasses active DTM override)
-        if exclude_feature != "eyes":
-            p = _check_asset("mod_assets/monika/f/face-eyes-normal.png")
-            if p:
-                args.extend([(0, 0), Transform(p + "?dtm_raw=1", crop=f_crop, size=f_size)])
-
+        # 4. Nose & Mouth (under front bangs)
         if exclude_feature != "nose":
-            p = _check_asset("mod_assets/monika/f/face-nose-def.png")
-            if p:
-                args.extend([(0, 0), Transform(p + "?dtm_raw=1", crop=f_crop, size=f_size)])
-
-        if exclude_feature != "mouth":
-            p = _check_asset("mod_assets/monika/f/face-mouth-smile.png", "mod_assets/monika/f/face-mouth-small.png")
-            if p:
-                args.extend([(0, 0), Transform(p + "?dtm_raw=1", crop=f_crop, size=f_size)])
-
-        if exclude_feature != "eyebrows":
-            p = _check_asset("mod_assets/monika/f/face-eyebrows-mid.png")
-            if p:
-                args.extend([(0, 0), Transform(p + "?dtm_raw=1", crop=f_crop, size=f_size)])
-
-        # 5. Custom feature from pack
-        if feature_path:
+            p_nose = _check_asset("mod_assets/monika/f/face-nose-def.png")
+            if p_nose:
+                args.extend([(0, 0), Transform(p_nose + "?dtm_raw=1", crop=f_crop, size=f_size)])
+        elif feature_path:
             args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
 
-        # 6. Hair front (canonical brown 10.png bangs first)
+        if exclude_feature != "mouth":
+            p_mouth = _check_asset("mod_assets/monika/f/face-mouth-smile.png", "mod_assets/monika/f/face-mouth-small.png")
+            if p_mouth:
+                args.extend([(0, 0), Transform(p_mouth + "?dtm_raw=1", crop=f_crop, size=f_size)])
+        elif feature_path:
+            args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
+
+        # 5. Hair front (canonical brown 10.png bangs)
         h_front = _check_asset("mod_assets/monika/h/def/10.png", "mod_assets/monika/h/hair-def-front.png")
         if h_front:
             args.extend([(0, 0), Transform(h_front + "?dtm_raw=1", crop=f_crop, size=f_size)])
+
+        # 6. Eyes (drawn ON TOP of front hair bangs)
+        if exclude_feature != "eyes":
+            p_eyes = _check_asset("mod_assets/monika/f/face-eyes-normal.png")
+            if p_eyes:
+                args.extend([(0, 0), Transform(p_eyes + "?dtm_raw=1", crop=f_crop, size=f_size)])
+        elif feature_path:
+            args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
+
+        # 7. Eyebrows (drawn ON TOP of front hair bangs)
+        if exclude_feature != "eyebrows":
+            p_brows = _check_asset("mod_assets/monika/f/face-eyebrows-mid.png")
+            if p_brows:
+                args.extend([(0, 0), Transform(p_brows + "?dtm_raw=1", crop=f_crop, size=f_size)])
+        elif feature_path:
+            args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
+
+        # 8. Extra expressions: blush, tears, sweatdrop (ON TOP of everything)
+        if exclude_feature not in ("nose", "mouth", "eyes", "eyebrows", "body") and feature_path:
+            args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
 
         if not args:
             return Transform("mod_assets/thumbs/remove.png", size=f_size)
@@ -904,7 +917,7 @@ init python:
                             return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
 
                 cand = dtm_get_thumbnail(category, sub_category, pack)
-                exclude = sub_category if sub_category in ("eyes", "eyebrows", "mouth", "nose") else None
+                exclude = sub_category if sub_category in ("eyes", "eyebrows", "mouth", "nose", "body") else None
                 feat_path = cand if cand and os.path.isabs(cand) else None
                 return dtm_get_monika_face_displayable(feature_path=feat_path, exclude_feature=exclude)
             else:
@@ -952,15 +965,15 @@ init python:
                     return Transform(cand, crop=torso_crop, size=(170, 170))
             return Transform("mod_assets/monika/b/body-def-0.png?dtm_raw=1", crop=torso_crop, size=(170, 170))
 
-        # 4. Promise Ring: Interlaced hands with ring zoom
+        # 4. Promise Ring: Pose 3 hand with ring zoom
         if sub_category == "promisering":
-            ring_crop = (542, 380, 200, 200)
+            ring_crop = (550, 380, 180, 180)
             if pack:
                 pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "accessories", "promisering", pack)
                 if os.path.isdir(pack_dir):
                     for f in os.listdir(pack_dir):
                         if f.lower() in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
-                            thumb_path = os.path.join(pack_dir, f).replace("\\", "/")
+                            thumb_path = os.path.join(pack_dir, f).replace(chr(92), "/")
                             w, h = dtm_get_image_size(thumb_path)
                             scale = min(170.0 / w, 170.0 / h)
                             return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
@@ -969,7 +982,7 @@ init python:
             else:
                 feat = "mod_assets/monika/a/promisering/3-10.png?dtm_raw=1"
 
-            arms_img = "mod_assets/monika/b/arms-steepling-10.png?dtm_raw=1"
+            arms_img = "mod_assets/monika/b/arms-left-rest-10.png?dtm_raw=1"
             return LiveComposite(
                 (170, 170),
                 (0, 0), Transform(arms_img, crop=ring_crop, size=(170, 170)),
