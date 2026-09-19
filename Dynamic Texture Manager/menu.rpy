@@ -600,8 +600,124 @@ init python:
             reset_func_map[sub_category]()
             renpy.restart_interaction()
 
-    def dtm_get_default_thumb():
+    DTM_ACCESSORY_CROP_MAP = {
+        "mug": (308, 693, 123, 154),
+        "hotchoc_mug": (308, 693, 123, 154),
+        "thermos_mug": (300, 668, 139, 182),
+        "roses": (192, 458, 185, 392),
+        "quetzal": (897, 670, 167, 180),
+        "promisering": (520, 727, 26, 26)
+    }
+
+    DTM_DEFAULT_IMAGE_MAP = {
+        "mug": "mod_assets/monika/a/mug/0.png",
+        "hotchoc_mug": "mod_assets/monika/a/hotchoc_mug/0.png",
+        "thermos_mug": "mod_assets/monika/a/thermos_mug/0.png",
+        "roses": "mod_assets/monika/a/roses/0.png",
+        "quetzal": "mod_assets/monika/a/quetzalplushie/0.png",
+        "promisering": "mod_assets/monika/a/promisering/2-10.png",
+        "calendar": "mod_assets/calendar/calendar_bg.png",
+        "chess": "mod_assets/games/chess/chess_board.png",
+        "pong": "mod_assets/games/pong/pong_field.png",
+        "nou": "mod_assets/games/nou/cards/v1.png",
+        "arms": "mod_assets/monika/b/arms-steepling-10.png",
+        "torso": "mod_assets/monika/b/body-def-0.png",
+        "body": "mod_assets/monika/b/body-def-head.png",
+        "eyes": "mod_assets/monika/f/face-eyes-normal.png",
+        "eyebrows": "mod_assets/monika/f/face-eyebrows-mid.png",
+        "mouth": "mod_assets/monika/f/face-mouth-smile.png",
+        "nose": "mod_assets/monika/f/face-nose-def.png",
+        "blush": "mod_assets/monika/f/face-blush-lines.png",
+        "tears": "mod_assets/monika/f/face-tears-streaming.png",
+        "sweatdrop": "mod_assets/monika/f/face-sweatdrop-def.png"
+    }
+
+    def _find_file_in_dir(dirpath, preferred_names=(), keyword=None, ext=".png"):
         import os
+        if not os.path.isdir(dirpath):
+            return None
+        files = os.listdir(dirpath)
+        for pref in preferred_names:
+            p_low = pref.lower()
+            for f in files:
+                if f.lower() == p_low:
+                    return os.path.join(dirpath, f).replace("\\", "/")
+        if keyword:
+            k_low = keyword.lower()
+            for f in files:
+                f_low = f.lower()
+                if k_low in f_low and f_low.endswith(ext):
+                    return os.path.join(dirpath, f).replace("\\", "/")
+        if ext:
+            for f in files:
+                if f.lower().endswith(ext):
+                    return os.path.join(dirpath, f).replace("\\", "/")
+        return None
+
+    def dtm_get_monika_face_displayable(feature_path=None, exclude_feature=None):
+        import os
+        f_crop = (470, 140, 340, 340)
+        f_size = (170, 170)
+        args = []
+
+        def _check_asset(*candidates):
+            for c in candidates:
+                if os.path.exists(os.path.join(config.gamedir, c)):
+                    return c
+            return None
+
+        # 1. Hair back
+        h_back = _check_asset("mod_assets/monika/h/hair-def-back.png", "mod_assets/monika/h/def/hair-def-back.png")
+        if h_back:
+            args.extend([(0, 0), Transform(h_back, crop=f_crop, size=f_size)])
+
+        # 2. Head base
+        head = _check_asset("mod_assets/monika/b/body-def-head.png")
+        if head:
+            args.extend([(0, 0), Transform(head, crop=f_crop, size=f_size)])
+
+        # 3. Base facial features (if not excluded)
+        if exclude_feature != "eyes":
+            p = _check_asset("mod_assets/monika/f/face-eyes-normal.png")
+            if p:
+                args.extend([(0, 0), Transform(p, crop=f_crop, size=f_size)])
+
+        if exclude_feature != "nose":
+            p = _check_asset("mod_assets/monika/f/face-nose-def.png")
+            if p:
+                args.extend([(0, 0), Transform(p, crop=f_crop, size=f_size)])
+
+        if exclude_feature != "mouth":
+            p = _check_asset("mod_assets/monika/f/face-mouth-smile.png", "mod_assets/monika/f/face-mouth-small.png")
+            if p:
+                args.extend([(0, 0), Transform(p, crop=f_crop, size=f_size)])
+
+        if exclude_feature != "eyebrows":
+            p = _check_asset("mod_assets/monika/f/face-eyebrows-mid.png")
+            if p:
+                args.extend([(0, 0), Transform(p, crop=f_crop, size=f_size)])
+
+        # 4. Custom feature from pack
+        if feature_path:
+            args.extend([(0, 0), Transform(feature_path, crop=f_crop, size=f_size)])
+
+        # 5. Hair front (bangs)
+        h_front = _check_asset("mod_assets/monika/h/hair-def-front.png", "mod_assets/monika/h/def/hair-def-front.png")
+        if h_front:
+            args.extend([(0, 0), Transform(h_front, crop=f_crop, size=f_size)])
+
+        if not args:
+            return Transform("mod_assets/thumbs/remove.png", size=f_size)
+
+        return LiveComposite((170, 170), *args)
+
+    def dtm_get_default_thumb(sub_category=None):
+        import os
+        if sub_category and sub_category in DTM_DEFAULT_IMAGE_MAP:
+            p = DTM_DEFAULT_IMAGE_MAP[sub_category]
+            full_p = os.path.join(config.gamedir, p)
+            if os.path.exists(full_p):
+                return p
         for f in ("mod_assets/thumbs/remove.png", "gui/window_icon.png"):
             if os.path.exists(os.path.join(config.gamedir, f)):
                 return f
@@ -631,20 +747,21 @@ init python:
             "nou": ("games", "nou"),
             "pong": ("games", "pong")
         }
-        
-        default_thumb = dtm_get_default_thumb()
+
+        default_thumb = dtm_get_default_thumb(sub_category)
         p_sub = folder_map.get(sub_category)
-        if not p_sub:
+        if not p_sub or not pack:
             return default_thumb
-            
+
         pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], pack)
         if os.path.isdir(pack_dir):
             try:
+                # 1. Dedicated thumbnails (highest priority)
                 for f in os.listdir(pack_dir):
                     f_lower = f.lower()
                     if f_lower in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
                         return (os.path.join(pack_dir, f)).replace("\\", "/")
-                # For games, check specific preview candidate
+                # 2. Specific game candidates
                 if sub_category == "chess":
                     candidate = os.path.join(pack_dir, "chess_board.png")
                     if os.path.exists(candidate):
@@ -661,6 +778,49 @@ init python:
                         ):
                             if os.path.exists(cand):
                                 return cand.replace("\\", "/")
+                # 3. Calendar candidates
+                elif sub_category == "calendar":
+                    for c_name in ("calendar_bg.png", "calendar.png"):
+                        cand = os.path.join(pack_dir, c_name)
+                        if os.path.exists(cand):
+                            return cand.replace("\\", "/")
+                # 4. Accessory texture candidates
+                elif sub_category in DTM_ACCESSORY_CROP_MAP:
+                    for a_name in ("0.png", "2-10.png", "acs-quetzalplushie-0.png"):
+                        cand = os.path.join(pack_dir, a_name)
+                        if os.path.exists(cand):
+                            return cand.replace("\\", "/")
+                # 5. Monika facial & body candidates
+                elif sub_category == "eyes":
+                    cand = _find_file_in_dir(pack_dir, ("face-eyes-normal.png", "face-eyes-def.png"), "eyes", ".png")
+                    if cand: return cand
+                elif sub_category == "eyebrows":
+                    cand = _find_file_in_dir(pack_dir, ("face-eyebrows-mid.png", "face-eyebrows-def.png"), "eyebrows", ".png")
+                    if cand: return cand
+                elif sub_category == "mouth":
+                    cand = _find_file_in_dir(pack_dir, ("face-mouth-smile.png", "face-mouth-def.png", "face-mouth-small.png"), "mouth", ".png")
+                    if cand: return cand
+                elif sub_category == "nose":
+                    cand = _find_file_in_dir(pack_dir, ("face-nose-def.png",), "nose", ".png")
+                    if cand: return cand
+                elif sub_category == "blush":
+                    cand = _find_file_in_dir(pack_dir, ("face-blush-lines.png", "face-blush-shade.png", "face-blush-full.png"), "blush", ".png")
+                    if cand: return cand
+                elif sub_category == "tears":
+                    cand = _find_file_in_dir(pack_dir, ("face-tears-streaming.png", "face-tears-pooled.png", "face-tears-normal.png"), "tears", ".png")
+                    if cand: return cand
+                elif sub_category == "sweatdrop":
+                    cand = _find_file_in_dir(pack_dir, ("face-sweatdrop-def.png", "face-sweat-def.png"), "sweat", ".png")
+                    if cand: return cand
+                elif sub_category == "arms":
+                    cand = _find_file_in_dir(pack_dir, ("arms-steepling-10.png", "arms-rest-10.png", "arms-left-rest-10.png", "arms-crossed-10.png"), "arms", ".png")
+                    if cand: return cand
+                elif sub_category == "torso":
+                    cand = _find_file_in_dir(pack_dir, ("body-def-0.png",), "torso", ".png")
+                    if cand: return cand
+                elif sub_category == "body":
+                    cand = _find_file_in_dir(pack_dir, ("body-def-head.png", "body-def-0.png"), "body", ".png")
+                    if cand: return cand
             except:
                 pass
         return default_thumb
@@ -714,20 +874,107 @@ init python:
             return (180, 180)
 
     def dtm_get_thumbnail_displayable(category, sub_category, pack):
+        import os
+
+        # 1. Monikas facial parts: Composed Face
+        monika_face_parts = ("eyes", "eyebrows", "mouth", "nose", "blush", "tears", "sweatdrop", "body")
+        if sub_category in monika_face_parts:
+            if pack:
+                # Check dedicated thumbnail
+                p_sub = ("monika", sub_category)
+                pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", p_sub[0], p_sub[1], pack)
+                if os.path.isdir(pack_dir):
+                    for f in os.listdir(pack_dir):
+                        if f.lower() in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
+                            thumb_path = os.path.join(pack_dir, f).replace("\\", "/")
+                            w, h = dtm_get_image_size(thumb_path)
+                            if w == h:
+                                return Transform(thumb_path, size=(180, 180))
+                            scale = min(170.0 / w, 170.0 / h)
+                            return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
+
+                cand = dtm_get_thumbnail(category, sub_category, pack)
+                exclude = sub_category if sub_category in ("eyes", "eyebrows", "mouth", "nose") else None
+                feat_path = cand if cand and os.path.isabs(cand) else None
+                return dtm_get_monika_face_displayable(feature_path=feat_path, exclude_feature=exclude)
+            else:
+                # Original button
+                if sub_category == "blush":
+                    return dtm_get_monika_face_displayable("mod_assets/monika/f/face-blush-lines.png", exclude_feature=None)
+                elif sub_category == "tears":
+                    return dtm_get_monika_face_displayable("mod_assets/monika/f/face-tears-streaming.png", exclude_feature=None)
+                elif sub_category == "sweatdrop":
+                    return dtm_get_monika_face_displayable("mod_assets/monika/f/face-sweatdrop-def.png", exclude_feature=None)
+                else:
+                    return dtm_get_monika_face_displayable(None, exclude_feature=None)
+
+        # 2. Monika Arms: Zoom to center
+        if sub_category == "arms":
+            arms_crop = (470, 420, 340, 340)
+            if pack:
+                pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "arms", pack)
+                if os.path.isdir(pack_dir):
+                    for f in os.listdir(pack_dir):
+                        if f.lower() in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
+                            thumb_path = os.path.join(pack_dir, f).replace("\\", "/")
+                            w, h = dtm_get_image_size(thumb_path)
+                            scale = min(170.0 / w, 170.0 / h)
+                            return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
+                cand = dtm_get_thumbnail(category, sub_category, pack)
+                if cand and os.path.isabs(cand):
+                    return Transform(cand, crop=arms_crop, size=(170, 170))
+            return Transform("mod_assets/monika/b/arms-steepling-10.png", crop=arms_crop, size=(170, 170))
+
+        # 3. Monika Torso: Zoom to upper torso
+        if sub_category == "torso":
+            torso_crop = (480, 440, 340, 340)
+            if pack:
+                pack_dir = os.path.join(store.DTM_BASE_PARENT, "textures", "monika", "torso", pack)
+                if os.path.isdir(pack_dir):
+                    for f in os.listdir(pack_dir):
+                        if f.lower() in ("thumb.png", "thumbnail.png", "thumb.jpg", "thumbnail.jpg", "preview.png", "preview.jpg"):
+                            thumb_path = os.path.join(pack_dir, f).replace("\\", "/")
+                            w, h = dtm_get_image_size(thumb_path)
+                            scale = min(170.0 / w, 170.0 / h)
+                            return Transform(thumb_path, size=(int(round(w * scale)), int(round(h * scale))))
+                cand = dtm_get_thumbnail(category, sub_category, pack)
+                if cand and os.path.isabs(cand):
+                    return Transform(cand, crop=torso_crop, size=(170, 170))
+            return Transform("mod_assets/monika/b/body-def-0.png", crop=torso_crop, size=(170, 170))
+
+        # 4. Accessories, Games, Room
         if not pack:
-            thumb_path = dtm_get_default_thumb()
+            thumb_path = dtm_get_default_thumb(sub_category)
         else:
             thumb_path = dtm_get_thumbnail(category, sub_category, pack)
-            
-        w, h = dtm_get_image_size(thumb_path)
-        if w <= 0 or h <= 0 or w == h:
-            return Transform(thumb_path, size=(180, 180))
+
+        crop = None
+        if sub_category in DTM_ACCESSORY_CROP_MAP:
+            p_lower = thumb_path.replace("\\", "/").lower()
+            if p_lower.endswith("/0.png") or p_lower.endswith("/2-10.png") or p_lower.endswith("quetzalplushie/0.png") or "monika/a/" in p_lower:
+                crop = DTM_ACCESSORY_CROP_MAP[sub_category]
+
+        if crop:
+            w, h = crop[2], crop[3]
+        else:
+            w, h = dtm_get_image_size(thumb_path)
+
+        if w <= 0 or h <= 0:
+            return Transform(thumb_path, crop=crop, size=(180, 180)) if crop else Transform(thumb_path, size=(180, 180))
+
+        if w == h:
+            fit_size = (140, 140) if crop else (180, 180)
         else:
             max_dim = 170.0
             scale = min(max_dim / w, max_dim / h)
             fit_w = int(round(w * scale))
             fit_h = int(round(h * scale))
-            return Transform(thumb_path, size=(fit_w, fit_h))
+            fit_size = (fit_w, fit_h)
+
+        if crop:
+            return Transform(thumb_path, crop=crop, size=fit_size)
+        else:
+            return Transform(thumb_path, size=fit_size)
 
     def dtm_format_pack_name(name, max_len=15):
         if not name:
@@ -889,7 +1136,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
                             xsize 180
                             ysize 180
                             add Solid(thumb_bg) size (180, 180)
-                            add dtm_get_thumbnail_displayable(None, None, None) xalign 0.5 yalign 0.5
+                            add dtm_get_thumbnail_displayable(None, store.dtm_active_sub_category, None) xalign 0.5 yalign 0.5
                             add mas_getTimeFile("mod_assets/frames/selector_overlay.png") xalign 0.5 yalign 0.5
                             if is_orig_highlight:
                                 add Solid("#ffaa99aa") size (180, 180) xalign 0.5 yalign 0.5
