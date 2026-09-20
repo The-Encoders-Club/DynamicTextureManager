@@ -466,8 +466,10 @@ init 999 python in dtm_core:
         except Exception:
             pass
 
-    def force_update_mas_visuals(category=None):
+    def force_update_mas_visuals(category=None, *args, **kwargs):
         try:
+            if category is None and args:
+                category = args[0]
             # 1. Clear MAS composite sprite caches for affected categories
             if hasattr(store, "mas_sprites"):
                 cids = []
