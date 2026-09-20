@@ -1,4 +1,4 @@
-init -10 python:
+init -5 python:
     import json
     import os
 
@@ -36,8 +36,20 @@ init -10 python:
             except Exception:
                 pass
 
-    # PC compatible path configuration
-    store.DTM_BASE_PARENT = renpy.config.basedir
+    # Android / PC compatible path configuration
+    import os
+    is_android = renpy.android or "ANDROID_ARGUMENT" in os.environ or "ANDROID_PRIVATE" in os.environ
+    if is_android:
+        if os.path.exists("/storage/emulated/0/Monika After Story"):
+            store.DTM_BASE_PARENT = "/storage/emulated/0/Monika After Story"
+        else:
+            store.DTM_BASE_PARENT = renpy.config.basedir
+    else:
+        store.DTM_BASE_PARENT = renpy.config.basedir
+
+    if store.DTM_BASE_PARENT not in renpy.config.searchpath:
+        renpy.config.searchpath.append(store.DTM_BASE_PARENT)
+
     store.DTM_CONFIG_PATH = os.path.join(store.DTM_BASE_PARENT, "textures", "config.json")
 
     def mas_dtm_load_config():
@@ -86,7 +98,7 @@ init -10 python:
 
     mas_dtm_load_config()
 
-init 999 python in dtm_core:
+init 1010 python in dtm_core:
     import store
     import os
     import renpy
@@ -772,7 +784,28 @@ init 999 python in dtm_core:
         if changed:
             force_update_mas_visuals(None)
 
-init 1000 python:
+    store.force_update_mas_visuals = force_update_mas_visuals
+
+init 1011 python:
+    # Ensure dtm_core functions are also referenced globally if accessed via store
     if hasattr(store, "dtm_core") and store.dtm_core:
+        store.force_update_mas_visuals = store.dtm_core.force_update_mas_visuals
+
+        # Unpatch any legacy monkey-patches from old zz_android_textures if present
+        if hasattr(store, "_mas_dtm_original_rk_face"):
+            store.mas_sprites._rk_face = store._mas_dtm_original_rk_face
+        if hasattr(store, "_mas_dtm_original__rk_head"):
+            store.mas_sprites._rk_head = store._mas_dtm_original__rk_head
+        if hasattr(store, "_mas_dtm_original__rk_base_body_nh"):
+            store.mas_sprites._rk_base_body_nh = store._mas_dtm_original__rk_base_body_nh
+        if hasattr(store, "_mas_dtm_original__rk_base_body_lean_nh"):
+            store.mas_sprites._rk_base_body_lean_nh = store._mas_dtm_original__rk_base_body_lean_nh
+        if hasattr(store, "_mas_dtm_original__rk_body_nh"):
+            store.mas_sprites._rk_body_nh = store._mas_dtm_original__rk_body_nh
+        if hasattr(store, "_mas_dtm_original__rk_body_lean_nh"):
+            store.mas_sprites._rk_body_lean_nh = store._mas_dtm_original__rk_body_lean_nh
+        if hasattr(store, "_mas_dtm_original__add_arms_rk"):
+            store.mas_sprites._add_arms_rk = store._mas_dtm_original__add_arms_rk
+
         store.dtm_core.rebuild_all_indexes()
         store.dtm_core.apply_loader_hook()
