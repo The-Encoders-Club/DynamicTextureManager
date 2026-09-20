@@ -399,6 +399,25 @@ init 999 python in dtm_core:
             elif category == "chess":
                 if basename in ("chess_board.png", "board.png"):
                     candidates.extend(["chess_board.png", "board.png"])
+            elif category == "quetzal":
+                if "mid" in basename or "mid" in requested_path:
+                    candidates.extend(["acs-quetzalplushie_mid-0.png", "quetzalplushie_mid-0.png", "mid-0.png", "mid.png", "0.png", "acs-quetzalplushie-0.png"])
+                else:
+                    candidates.extend(["acs-quetzalplushie-0.png", "0.png", "quetzalplushie-0.png", "quetzal.png"])
+            elif category == "mug":
+                candidates.extend(["acs-mug-0.png", "0.png", "mug-0.png", "mug.png"])
+            elif category == "hotchoc_mug":
+                candidates.extend(["acs-hotchoc_mug-0.png", "acs-hotchoc-0.png", "0.png", "hotchoc_mug-0.png", "hotchoc-0.png", "hotchoc.png"])
+            elif category == "thermos_mug":
+                candidates.extend(["acs-thermos_mug-0.png", "acs-thermos-0.png", "0.png", "thermos_mug-0.png", "thermos-0.png", "thermos.png"])
+            elif category == "roses":
+                candidates.extend(["acs-roses-0.png", "0.png", "roses-0.png", "roses.png"])
+            elif category == "promisering":
+                code = basename.replace(".png", "")
+                candidates.extend([basename, code + ".png"])
+                for ik in idx.keys():
+                    if ik.endswith("-" + basename) or ik.endswith("-" + code + ".png") or ik.endswith("/" + basename):
+                        candidates.append(ik)
 
             final_candidates = []
             for cand in candidates:
@@ -470,9 +489,20 @@ init 999 python in dtm_core:
                         except Exception:
                             pass
 
-                if category is None and hasattr(store.mas_sprites, "_clear_caches"):
+                if hasattr(store.mas_sprites, "_clear_caches"):
                     try:
                         store.mas_sprites._clear_caches()
+                    except Exception:
+                        pass
+                if hasattr(store.mas_sprites, "CACHE_TABLE"):
+                    try:
+                        for cid, cache in store.mas_sprites.CACHE_TABLE.items():
+                            cache.clear()
+                    except Exception:
+                        pass
+                if hasattr(store.mas_sprites, "MFM_CACHE"):
+                    try:
+                        store.mas_sprites.MFM_CACHE.clear()
                     except Exception:
                         pass
 

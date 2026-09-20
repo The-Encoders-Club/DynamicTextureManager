@@ -836,15 +836,19 @@ init python:
                             return cand.replace("\\", "/")
                 # 4. Accessory texture candidates
                 elif sub_category in DTM_ACCESSORY_CROP_MAP:
-                    for a_name in ("0.png", "2-10.png", "acs-quetzalplushie-0.png"):
-                        cand = os.path.join(pack_dir, a_name)
-                        if os.path.exists(cand):
-                            return cand.replace("\\", "/")
+                    pref_list = ("0.png", "2-10.png", "acs-quetzalplushie-0.png", "acs-mug-0.png", "acs-hotchoc_mug-0.png", "acs-thermos_mug-0.png", "acs-roses-0.png")
+                    cand = _find_file_in_dir(pack_dir, pref_list, sub_category, ".png")
+                    if not cand:
+                        cand = _find_file_in_dir(pack_dir, pref_list, "0", ".png")
+                    if not cand:
+                        cand = _find_file_in_dir(pack_dir, (), None, ".png")
+                    if cand: return cand
                 elif sub_category == "promisering":
-                    for r_name in ("5-10.png", "3-10.png", "2-10.png", "0.png"):
-                        cand = os.path.join(pack_dir, r_name)
-                        if os.path.exists(cand):
-                            return cand.replace("\\", "/")
+                    pref_list = ("5-10.png", "3-10.png", "2-10.png", "0.png")
+                    cand = _find_file_in_dir(pack_dir, pref_list, "5-10", ".png")
+                    if not cand:
+                        cand = _find_file_in_dir(pack_dir, pref_list, None, ".png")
+                    if cand: return cand
                 # 5. Monika facial & body candidates
                 elif sub_category == "eyes":
                     cand = _find_file_in_dir(pack_dir, ("face-eyes-normal.png", "face-eyes-def.png"), "eyes", ".png")
@@ -1143,8 +1147,11 @@ init python:
             p_lower = thumb_path.replace("\\", "/").lower()
             if "?dtm_raw" in p_lower:
                 p_lower = p_lower.split("?")[0]
-            if p_lower.endswith("/0.png") or p_lower.endswith("/2-10.png") or p_lower.endswith("quetzalplushie/0.png") or "monika/a/" in p_lower:
-                crop = DTM_ACCESSORY_CROP_MAP[sub_category]
+            is_dedicated = any(p_lower.endswith(t) for t in ("thumb.png", "thumbnail.png", "preview.png", "thumb.jpg", "thumbnail.jpg", "preview.jpg"))
+            if not is_dedicated:
+                w_chk, h_chk = dtm_get_image_size(p_lower)
+                if w_chk >= 800 or p_lower.endswith(("/0.png", "-0.png", "/2-10.png", "-2-10.png")) or "quetzal" in p_lower or "monika/a/" in p_lower or sub_category in p_lower:
+                    crop = DTM_ACCESSORY_CROP_MAP[sub_category]
 
         if crop:
             w, h = crop[2], crop[3]
