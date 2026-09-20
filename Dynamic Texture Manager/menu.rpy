@@ -1,4 +1,15 @@
 # menu.rpy
+init -100 python:
+    try:
+        import __builtin__ as builtins
+    except ImportError:
+        import builtins
+    basestring = getattr(builtins, "basestring", str)
+
+    # Ensure store.main_adj exists so mobile / Ren'Py 7 ports don't raise StoreModule AttributeError
+    if not hasattr(store, "main_adj"):
+        store.main_adj = None
+
 init 5 python:
     addEvent(
         Event(
@@ -109,15 +120,18 @@ label mas_dtm_change_textures:
         dtm_initial_overrides = {}
         dtm_prev_items, dtm_prev_cats = mas_dtm_get_dialogue_categories(pool=True)
 
-        # Hook main_adj.changed callback to save scroll position on scroll events
-        store.dtm_original_changed = store.main_adj.changed
-        store._dtm_last_scroll_value = 0
-        def dtm_on_scroll(value):
-            if value > 0:
-                store._dtm_last_scroll_value = value
-            if store.dtm_original_changed:
-                store.dtm_original_changed(value)
-        store.main_adj.changed = dtm_on_scroll
+        # Hook main_adj.changed callback to save scroll position on scroll events (safely guarded for Android / Ren'Py 7)
+        if hasattr(store, "main_adj") and store.main_adj is not None:
+            store.dtm_original_changed = getattr(store.main_adj, "changed", None)
+            store._dtm_last_scroll_value = 0
+            def dtm_on_scroll(value):
+                if value > 0:
+                    store._dtm_last_scroll_value = value
+                if getattr(store, "dtm_original_changed", None):
+                    store.dtm_original_changed(value)
+            store.main_adj.changed = dtm_on_scroll
+        else:
+            store._dtm_last_scroll_value = 0
 
     # Move Monika to the left pane layout position
     show monika at t21
@@ -508,9 +522,10 @@ label mas_dtm_change_textures:
                     dtm_exit = True
                     dtm_action_to_run = _return.split(":")[1] if _return.startswith("event:") else _return
 
-            # Restore the scroll position for the next iteration of the screen loop
-            if not dtm_exit:
-                store.main_adj.change(store._dtm_last_scroll_value)
+            # Restore the scroll position for the next iteration of the screen loop (safely guarded for Android / Ren'Py 7)
+            if not dtm_exit and hasattr(store, "main_adj") and store.main_adj is not None:
+                if hasattr(store.main_adj, "change") and hasattr(store, "_dtm_last_scroll_value"):
+                    store.main_adj.change(store._dtm_last_scroll_value)
 
         # Execute selected conversation event if applicable
         if dtm_action_to_run:
@@ -520,8 +535,10 @@ label mas_dtm_change_textures:
 
     python:
         if hasattr(store, "dtm_original_changed"):
-            store.main_adj.changed = store.dtm_original_changed
-            store.main_adj.change(0)
+            if hasattr(store, "main_adj") and store.main_adj is not None:
+                store.main_adj.changed = store.dtm_original_changed
+                if hasattr(store.main_adj, "change"):
+                    store.main_adj.change(0)
             del store.dtm_original_changed
         if hasattr(store, "_dtm_last_scroll_value"):
             del store._dtm_last_scroll_value
@@ -1202,6 +1219,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
 
             viewport id "filter_scroll":
                 mousewheel True
+                draggable True
                 has vbox
                 spacing 5
                 for cat_label, cat_id in categories_list:
@@ -1277,6 +1295,7 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
             ysize 460
             mousewheel True
             arrowkeys True
+            draggable True
 
             vbox:
                 xsize 200
