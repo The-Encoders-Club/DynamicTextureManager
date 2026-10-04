@@ -911,9 +911,12 @@ init python:
             return (180, 180)
         clean_path = filepath.split("?")[0] if "?" in filepath else filepath
         if not os.path.isabs(clean_path):
-            full_path = os.path.join(config.gamedir, clean_path)
-            if not os.path.exists(full_path):
-                full_path = os.path.join(store.DTM_BASE_PARENT, clean_path)
+            if os.path.exists("/" + clean_path):
+                full_path = "/" + clean_path
+            else:
+                full_path = os.path.join(config.gamedir, clean_path)
+                if not os.path.exists(full_path):
+                    full_path = os.path.join(store.DTM_BASE_PARENT, clean_path)
         else:
             full_path = clean_path
 

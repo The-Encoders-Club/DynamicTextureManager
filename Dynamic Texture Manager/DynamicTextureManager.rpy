@@ -49,6 +49,9 @@ init -5 python:
 
     if store.DTM_BASE_PARENT not in renpy.config.searchpath:
         renpy.config.searchpath.append(store.DTM_BASE_PARENT)
+    textures_dir = os.path.join(store.DTM_BASE_PARENT, "textures")
+    if textures_dir not in renpy.config.searchpath:
+        renpy.config.searchpath.append(textures_dir)
 
     store.DTM_CONFIG_PATH = os.path.join(store.DTM_BASE_PARENT, "textures", "config.json")
 
@@ -445,16 +448,54 @@ init 1010 python in dtm_core:
 
         return None
 
+    def _dtm_safe_fs_path(p):
+        if not isinstance(p, basestring):
+            return p
+        if isinstance(p, unicode):
+            try:
+                import renpy.exports
+                return renpy.exports.fsencode(p)
+            except Exception:
+                try:
+                    import sys
+                    return p.encode(sys.getfilesystemencoding() or "utf-8")
+                except Exception:
+                    return p
+        return p
+
     def custom_loader_load(name, *args, **kwargs):
         try:
             if not isinstance(name, basestring):
                 return renpy.loader._dtm_original_load(name, *args, **kwargs)
 
-            # Bypass DTM override if ?dtm_raw is requested
+            clean_name = name.split("?")[0].strip() if "?" in name else name.strip()
+            if not clean_name:
+                return renpy.loader._dtm_original_load(name, *args, **kwargs)
+
+            safe_name = _dtm_safe_fs_path(clean_name)
+
+            # 1. Direct filesystem check for absolute path (Linux /home/..., Windows C:/..., Android /storage/...)
+            if os.path.isabs(safe_name) and os.path.isfile(safe_name):
+                return open(safe_name, "rb")
+
+            # 2. Check if leading slash was stripped (Ren'Py loader strips leading '/' on load)
+            if not os.path.isabs(clean_name):
+                rooted = _dtm_safe_fs_path("/" + clean_name)
+                if os.path.isfile(rooted):
+                    return open(rooted, "rb")
+
+            # 3. Check if it's a texture path relative to DTM_BASE_PARENT
+            if clean_name.startswith("textures/") or clean_name.startswith("/textures/"):
+                if hasattr(store, "DTM_BASE_PARENT") and store.DTM_BASE_PARENT:
+                    base_rel = _dtm_safe_fs_path(os.path.join(store.DTM_BASE_PARENT, clean_name.lstrip("/")))
+                    if os.path.isfile(base_rel):
+                        return open(base_rel, "rb")
+
+            # 4. Bypass DTM override if ?dtm_raw is requested
             if "?dtm_raw" in name:
-                clean_name = name.split("?")[0]
                 return renpy.loader._dtm_original_load(clean_name, *args, **kwargs)
 
+            # 5. Game assets override (mod_assets/...)
             real_name = name.split("?dtm_theme=")[0] if "?dtm_theme=" in name else name
             norm_name = real_name.replace("\\", "/").lower()
             clean_norm_name = norm_name[norm_name.index("mod_assets/"):] if "mod_assets/" in norm_name else norm_name
@@ -462,12 +503,68 @@ init 1010 python in dtm_core:
             category = get_category_for_path(clean_norm_name)
             if category:
                 override = get_custom_override(category, clean_norm_name)
-                if override and os.path.isfile(override):
-                    return open(override, "rb")
+                if override:
+                    safe_override = _dtm_safe_fs_path(override)
+                    if os.path.isfile(safe_override):
+                        return open(safe_override, "rb")
         except Exception:
             pass
 
         return renpy.loader._dtm_original_load(name, *args, **kwargs)
+
+    def custom_loader_loadable(name, *args, **kwargs):
+        try:
+            if not isinstance(name, basestring):
+                return renpy.loader._dtm_original_loadable(name, *args, **kwargs)
+
+            clean_name = name.split("?")[0].strip() if "?" in name else name.strip()
+            if not clean_name:
+                return renpy.loader._dtm_original_loadable(name, *args, **kwargs)
+
+            safe_name = _dtm_safe_fs_path(clean_name)
+
+            if os.path.isabs(safe_name) and os.path.isfile(safe_name):
+                return True
+
+            if not os.path.isabs(clean_name):
+                rooted = _dtm_safe_fs_path("/" + clean_name)
+                if os.path.isfile(rooted):
+                    return True
+
+            if clean_name.startswith("textures/") or clean_name.startswith("/textures/"):
+                if hasattr(store, "DTM_BASE_PARENT") and store.DTM_BASE_PARENT:
+                    base_rel = _dtm_safe_fs_path(os.path.join(store.DTM_BASE_PARENT, clean_name.lstrip("/")))
+                    if os.path.isfile(base_rel):
+                        return True
+        except Exception:
+            pass
+
+        return renpy.loader._dtm_original_loadable(name, *args, **kwargs)
+
+    def custom_loader_transfn(name, *args, **kwargs):
+        try:
+            if isinstance(name, basestring):
+                clean_name = name.split("?")[0].strip() if "?" in name else name.strip()
+                if clean_name:
+                    safe_name = _dtm_safe_fs_path(clean_name)
+
+                    if os.path.isabs(safe_name) and os.path.exists(safe_name):
+                        return safe_name
+
+                    if not os.path.isabs(clean_name):
+                        rooted = _dtm_safe_fs_path("/" + clean_name)
+                        if os.path.exists(rooted):
+                            return rooted
+
+                    if clean_name.startswith("textures/") or clean_name.startswith("/textures/"):
+                        if hasattr(store, "DTM_BASE_PARENT") and store.DTM_BASE_PARENT:
+                            base_rel = _dtm_safe_fs_path(os.path.join(store.DTM_BASE_PARENT, clean_name.lstrip("/")))
+                            if os.path.exists(base_rel):
+                                return base_rel
+        except Exception:
+            pass
+
+        return renpy.loader._dtm_original_transfn(name, *args, **kwargs)
 
     def apply_loader_hook():
         try:
@@ -475,8 +572,20 @@ init 1010 python in dtm_core:
             if not hasattr(renpy.loader, "_dtm_original_load"):
                 renpy.loader._dtm_original_load = renpy.loader.load
             renpy.loader.load = custom_loader_load
+
+            if hasattr(renpy.loader, "loadable"):
+                if not hasattr(renpy.loader, "_dtm_original_loadable"):
+                    renpy.loader._dtm_original_loadable = renpy.loader.loadable
+                renpy.loader.loadable = custom_loader_loadable
+
+            if hasattr(renpy.loader, "transfn"):
+                if not hasattr(renpy.loader, "_dtm_original_transfn"):
+                    renpy.loader._dtm_original_transfn = renpy.loader.transfn
+                renpy.loader.transfn = custom_loader_transfn
         except Exception:
             pass
+
+    apply_loader_hook()
 
     def force_update_mas_visuals(category=None, *args, **kwargs):
         try:
