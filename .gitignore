@@ -1,0 +1,25 @@
+# Ren'Py / MAS: files the game creates next to the submod
+*.rpyc
+*.rpymc
+*.rpyb
+*.rpa
+*.bak
+*.tmp
+
+# Created by the submod when it runs (settings and the texture packs of each player)
+textures/
+config.json
+
+# Releases built by hand
+*.zip
+
+# System and editors
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
