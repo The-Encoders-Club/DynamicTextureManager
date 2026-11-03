@@ -40,10 +40,14 @@ init -5 python:
     import os
     is_android = renpy.android or "ANDROID_ARGUMENT" in os.environ or "ANDROID_PRIVATE" in os.environ
     if is_android:
-        if os.path.exists("/storage/emulated/0/Monika After Story"):
+        # Safety measure: on Android the textures live in the public folder of the game. If it is not there
+        # (usually the storage permission was not granted), stop here instead of working in a wrong folder
+        if os.path.isdir("/storage/emulated/0/Monika After Story"):
             store.DTM_BASE_PARENT = "/storage/emulated/0/Monika After Story"
         else:
-            store.DTM_BASE_PARENT = renpy.config.basedir
+            raise IOError(
+                "Dynamic Texture Manager: the folder /storage/emulated/0/Monika After Story was not found. Invalid package."
+            )
     else:
         store.DTM_BASE_PARENT = renpy.config.basedir
 
