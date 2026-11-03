@@ -25,6 +25,11 @@ Follow these simple steps to get the submod running:
 4. **First Launch:** Run your game once. The submod will automatically generate the required `textures/` directory at your game's root folder, alongside the `config.json` file.
 5. **Add Your Textures:** Close the game, navigate into the newly generated `textures/` folder at the root level, and drop your community texture packs into their corresponding categories!
 
+## 🔄 Updating
+
+* **With [Submod Updater Plugin](https://github.com/Booplicate/MAS-Submods-SubmodUpdaterPlugin) installed:** the game tells you when there is a new version and downloads it from the **Releases** of this repository. Restart the game to apply it. The plugin is optional.
+* **By hand:** download the new `.zip` and extract it over the old folder, overwriting. Your textures and your settings (`textures/` and `config.json`) are kept.
+
 ## 📂 Folder Structure
 
 This is how the submod files and asset folders are organized within your game directory:
