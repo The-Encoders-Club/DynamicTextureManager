@@ -25,6 +25,14 @@ init 5 python:
     )
 
 init python:
+    def mas_dtm_search_changed(text):
+        # Callback of the search bar. The bar is a plain input, as the one of the selectors of MAS, and
+        # not one tied to a VariableInputValue: a value with default=True is editable from the start,
+        # so on Android the keyboard would open as soon as the screen shows. A plain input only
+        # becomes editable when it is tapped.
+        store.dtm_search_text = text
+        renpy.restart_interaction()
+
     def mas_dtm_get_texture_folders(sub_path):
         import os
         base_path = os.path.join(store.DTM_BASE_PARENT, "textures", sub_path)
@@ -1266,22 +1274,47 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
         padding (0, 0)
         background Solid("#ffaa99aa")
 
-        viewport:
-            draggable False
-            arrowkeys False
-            mousewheel "horizontal"
-            xsize 195
-            ysize 38
-            xalign 0.5
-            yalign 0.5
-            input:
-                value VariableInputValue("dtm_search_text")
-                style_prefix "input"
-                length 50
-                xalign 0.0
+        if renpy.android:
+            # Android: a plain input, as the search bar of the selectors of MAS. It only becomes editable
+            # when it is tapped, and its tap area is the box of the bar (xmaximum, ymaximum), so the
+            # buttons next to it, like the filter, do not activate it
+            viewport:
+                draggable False
+                arrowkeys False
+                mousewheel "horizontal"
+                xsize 195
+                ysize 38
+                xalign 0.5
                 yalign 0.5
-                layout "nobreak"
-                first_indent (0 if not store.dtm_search_text else 10)
+                input:
+                    id "dtm_search_input"
+                    default (store.dtm_search_text or "")
+                    changed mas_dtm_search_changed
+                    style_prefix "input"
+                    length 50
+                    xmaximum 195
+                    ymaximum 38
+                    xalign 0.0
+                    yalign 0.5
+                    layout "nobreak"
+                    first_indent (0 if not store.dtm_search_text else 10)
+        else:
+            viewport:
+                draggable False
+                arrowkeys False
+                mousewheel "horizontal"
+                xsize 195
+                ysize 38
+                xalign 0.5
+                yalign 0.5
+                input:
+                    value VariableInputValue("dtm_search_text")
+                    style_prefix "input"
+                    length 50
+                    xalign 0.0
+                    yalign 0.5
+                    layout "nobreak"
+                    first_indent (0 if not store.dtm_search_text else 10)
 
         if not store.dtm_search_text:
             text _("Search for..."):
