@@ -3,7 +3,7 @@ init -990 python:
         author="The Encoders Club",
         name="Dynamic Texture Manager",
         description=_("Advanced system for managing and applying custom dynamic textures within the game without overwriting the base files."),
-        version="2.0.3"
+        version="3.0.0"
     )
 
 # Updates through the Submod Updater Plugin. It is optional: without it the submod works the same
