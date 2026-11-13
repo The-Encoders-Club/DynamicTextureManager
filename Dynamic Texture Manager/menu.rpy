@@ -25,42 +25,6 @@ init 5 python:
     )
 
 init python:
-    def mas_dtm_is_touch():
-        import os
-        return (
-            renpy.android
-            or renpy.variant("android")
-            or getattr(store, "is_android", False)
-            or "ANDROID_ARGUMENT" in os.environ
-            or "ANDROID_PRIVATE" in os.environ
-            or getattr(persistent, "_dtm_force_touch_search", False)
-        )
-
-    def mas_dtm_prompt_search():
-        curr_val = store.dtm_search_text if store.dtm_search_text else ""
-        prompt_str = _("Search for...")
-        if hasattr(store, "mas_input"):
-            res = store.mas_input(
-                prompt_str,
-                default=curr_val,
-                length=50,
-                screen_kwargs={"use_return_button": True}
-            )
-            if res == "cancel_input":
-                return store.dtm_search_text
-            if res is not None:
-                return res.strip()
-            return ""
-        else:
-            res = renpy.input(
-                prompt_str,
-                default=curr_val,
-                length=50
-            )
-            if res is not None:
-                return res.strip()
-            return ""
-
     def mas_dtm_get_texture_folders(sub_path):
         import os
         base_path = os.path.join(store.DTM_BASE_PARENT, "textures", sub_path)
@@ -421,10 +385,6 @@ label mas_dtm_change_textures:
                     set_func_map[store.dtm_active_sub_category](abs_folder)
                 elif _return == "dtm_change_category":
                     pass
-                elif _return == "dtm_android_search":
-                    store.dtm_search_text = mas_dtm_prompt_search()
-                    if hasattr(store, "dtm_sidebar_adj") and store.dtm_sidebar_adj:
-                        store.dtm_sidebar_adj.change(0)
             else:
                 # Safe parsing of native screen return
                 if _return is False or _return is None or _return == "nevermind":
@@ -1306,61 +1266,32 @@ screen dtm_selector_sidebar(sub_category, packs_list, categories_list, folder_ma
         padding (0, 0)
         background Solid("#ffaa99aa")
 
-        if mas_dtm_is_touch():
-            button:
-                style "empty"
-                xsize 200
-                ysize 40
-                padding (0, 0)
-                margin (0, 0)
-                hover_sound gui.hover_sound
-                activate_sound gui.activate_sound
-                action Return("dtm_android_search")
-
-                if store.dtm_search_text:
-                    text store.dtm_search_text:
-                        xalign 0.0
-                        yalign 0.5
-                        xmaximum 185
-                        layout "nobreak"
-                        color "#FFFFFF"
-                        first_indent 10
-                        outlines []
-                else:
-                    text _("Search for..."):
-                        xalign 0.0
-                        yalign 0.5
-                        layout "nobreak"
-                        color "#EEEEEEB2"
-                        first_indent 10
-                        outlines []
-        else:
-            viewport:
-                draggable False
-                arrowkeys False
-                mousewheel "horizontal"
-                xsize 195
-                ysize 38
-                xalign 0.5
+        viewport:
+            draggable False
+            arrowkeys False
+            mousewheel "horizontal"
+            xsize 195
+            ysize 38
+            xalign 0.5
+            yalign 0.5
+            input:
+                value VariableInputValue("dtm_search_text")
+                style_prefix "input"
+                length 50
+                xalign 0.0
                 yalign 0.5
-                input:
-                    value VariableInputValue("dtm_search_text")
-                    style_prefix "input"
-                    length 50
-                    xalign 0.0
-                    yalign 0.5
-                    layout "nobreak"
-                    first_indent (0 if not store.dtm_search_text else 10)
+                layout "nobreak"
+                first_indent (0 if not store.dtm_search_text else 10)
 
-            if not store.dtm_search_text:
-                text _("Search for..."):
-                    text_align 0.0
-                    yalign 0.5
-                    layout "nobreak"
-                    color "#EEEEEEB2"
-                    first_indent 10
-                    line_leading 1
-                    outlines []
+        if not store.dtm_search_text:
+            text _("Search for..."):
+                text_align 0.0
+                yalign 0.5
+                layout "nobreak"
+                color "#EEEEEEB2"
+                first_indent 10
+                line_leading 1
+                outlines []
 
     # Lista de packs (Frame exclusivo para la lista)
     frame:
